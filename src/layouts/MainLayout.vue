@@ -1,81 +1,156 @@
+<script setup lang="ts">
+// Layout principal: header fixo com a marca, navegação e toggle de tema,
+// e rodapé com a assinatura de origem ("movido a café extra-forte").
+import ThemeToggle from '@/components/ThemeToggle.vue';
+</script>
+
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+  <div class="shell">
+    <header class="shell__header">
+      <div class="shell__header-inner">
+        <router-link to="/" class="shell__brand">
+          <span class="shell__cup" aria-hidden="true">☕</span>
+          Leiautes Para Devs
+        </router-link>
+        <nav class="shell__nav" aria-label="Navegação principal">
+          <router-link to="/gerador" class="shell__nav-link" data-testid="nav-generator"
+            >Gerador</router-link
+          >
+        </nav>
+        <div class="shell__actions">
+          <ThemeToggle />
+          <a
+            class="shell__nav-link"
+            href="https://github.com/ratto/leiautes-para-devs"
+            target="_blank"
+            rel="noopener"
+            >GitHub</a
+          >
+        </div>
+      </div>
+    </header>
 
-        <q-toolbar-title> Quasar App </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <q-list>
-        <q-item-label header> Essential Links </q-item-label>
-
-        <EssentialLink v-for="link in linksList" :key="link.label" v-bind="link" />
-      </q-list>
-    </q-drawer>
-
-    <q-page-container>
+    <main class="shell__main">
       <router-view />
-    </q-page-container>
-  </q-layout>
+    </main>
+
+    <footer class="shell__footer">
+      <div class="shell__footer-inner">
+        <!-- Assinatura de origem — requisito do dono do produto (PRD §11) -->
+        <span>☕ Leiautes Para Devs — feito por dev, para dev, com café extra-forte.</span>
+        <div class="shell__footer-links">
+          <a href="https://github.com/ratto/leiautes-para-devs" target="_blank" rel="noopener"
+            >GitHub</a
+          >
+          <a href="https://www.linkedin.com/in/pedro-tosta-paixao/" target="_blank" rel="noopener"
+            >LinkedIn</a
+          >
+          <a
+            href="https://www.paypal.com/donate/?hosted_button_id=8RE442ASFC2PS"
+            target="_blank"
+            rel="noopener"
+            >Apoiar ☕</a
+          >
+        </div>
+      </div>
+    </footer>
+  </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue';
-import EssentialLink, { type EssentialLinkProps } from '@/components/EssentialLink.vue';
-
-const linksList: EssentialLinkProps[] = [
-  {
-    label: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev',
-  },
-  {
-    label: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework',
-  },
-  {
-    label: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev',
-  },
-  {
-    label: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev',
-  },
-  {
-    label: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev',
-  },
-  {
-    label: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev',
-  },
-  {
-    label: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev',
-  },
-];
-
-const leftDrawerOpen = ref(false);
-
-function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
+<style scoped lang="scss">
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--lpd-base);
 }
-</script>
+
+.shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--lpd-base) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--lpd-border);
+}
+
+.shell__header-inner,
+.shell__footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.shell__header-inner {
+  height: 64px;
+}
+
+.shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--lpd-font-display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--lpd-text);
+  text-decoration: none;
+}
+
+.shell__cup {
+  font-size: 20px;
+}
+
+.shell__nav {
+  margin-left: auto;
+}
+
+.shell__nav-link {
+  color: var(--lpd-text-muted);
+  text-decoration: none;
+  font-size: 15px;
+
+  &:hover {
+    color: var(--lpd-text);
+  }
+}
+
+.shell__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shell__main {
+  flex: 1;
+}
+
+.shell__footer {
+  border-top: 1px solid var(--lpd-border);
+  padding: 32px 0;
+  color: var(--lpd-text-muted);
+  font-size: 14px;
+}
+
+.shell__footer-inner {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.shell__footer-links {
+  display: flex;
+  gap: 18px;
+
+  a {
+    color: var(--lpd-text-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--lpd-text);
+    }
+  }
+}
+</style>

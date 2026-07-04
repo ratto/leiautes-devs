@@ -1,15 +1,24 @@
 <!doctype html>
-<html>
+<html lang="pt-BR" data-theme="dark">
   <head>
     <title><%= productName %></title>
 
     <meta charset="utf-8" />
-    <meta name="description" content="<%= productDescription %>" />
+    <meta
+      name="description"
+      content="Gere arquivos RCB001, CNAB240 e CNAB400 para testar seus sistemas. Roda no navegador, nada é salvo (LGPD). Feito por dev, para dev — movido a café extra-forte."
+    />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
-    <meta
-      name="viewport"
-      content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width<% if (ctx.mode.cordova || ctx.mode.capacitor) { %>, viewport-fit=cover<% } %>"
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+
+    <!-- Fontes do design system "Café + Console":
+         Space Grotesk (display) · Inter (corpo/UI) · JetBrains Mono (dados) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
     />
 
     <link rel="icon" type="image/png" sizes="128x128" href="icons/favicon-128x128.png" />

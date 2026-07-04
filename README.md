@@ -19,7 +19,7 @@ Quem desenvolve ou testa integração bancária conhece o gargalo: para validar 
 
 O **Leiautes Para Devs** resolve isso: você monta o arquivo numa interface guiada e baixa um arquivo válido em segundos — pronto para alimentar seus testes.
 
-> Este projeto é a evolução do protótipo [`arquivo-bancario-generator`](https://github.com/ratto/arquivo-bancario-generator) (codinome *Patinho Feio*). O patinho virou cisne: reescrito em Quasar + TypeScript, sob TDD, com arquitetura sustentável.
+> Este projeto é a evolução do protótipo [`arquivo-bancario-generator`](https://github.com/ratto/arquivo-bancario-generator) (codinome _Patinho Feio_). O patinho virou cisne: reescrito em Quasar + TypeScript, sob TDD, com arquitetura sustentável.
 
 ---
 
@@ -130,8 +130,8 @@ npm run test:e2e
 
 ## 🗺️ Roadmap
 
-- **v1.0.0 — "Patinho Feio"** *(protótipo, concluído):* prova de conceito em Vue/Vuetify, apenas RCB001.
-- **v2.0.0 — "Cisne"** *(atual):* reescrita em Quasar + TS sob TDD; RCB001, CNAB240 e CNAB400; toggle de validação; visualizador com régua de posições; dark mode; testes Vitest + Playwright; cobertura ≥ 85%.
+- **v1.0.0 — "Patinho Feio"** _(protótipo, concluído):_ prova de conceito em Vue/Vuetify, apenas RCB001.
+- **v2.0.0 — "Cisne"** _(atual):_ reescrita em Quasar + TS sob TDD; RCB001, CNAB240 e CNAB400; toggle de validação; visualizador com régua de posições; dark mode; testes Vitest + Playwright; cobertura ≥ 85%.
 - **v2.x — "Mais um café":** geração de massa em lote, destaque de campo no visualizador, exportar/importar cenários de teste, novos leiautes FEBRABAN sob demanda.
 
 ---

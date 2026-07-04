@@ -1,1 +1,207 @@
-// app global css
+// ============================================================================
+// Design System "Café + Console" — tokens e estilos globais
+// Fonte da verdade: docs/design system/Design_System_Leiautes_Para_Devs.md
+// ============================================================================
+
+// --- Tokens de tema (dark é o padrão do produto) ---------------------------
+:root[data-theme='dark'] {
+  --lpd-base: #14100b; // Café Preto — fundo da página
+  --lpd-surface: #1f1813; // Espresso — cards, painéis
+  --lpd-surface-2: #2a211a; // Torra Média — superfícies elevadas
+  --lpd-border: #3a2e24; // Borra — bordas, divisores
+  --lpd-text: #f5e9d6; // Crema — texto primário
+  --lpd-text-muted: #b6a28c; // Leite Vaporizado — texto secundário
+  --lpd-accent: #f2a03d; // Âmbar / Caramelo — ação primária
+  --lpd-accent-hover: #ffb454; // Âmbar Claro
+  --lpd-on-accent: #1a1109; // Grão — texto sobre âmbar
+  --lpd-success: #5fbf8f;
+  --lpd-error: #f26d6d;
+  --lpd-warning: #f2c94c;
+  --lpd-info: #6da8f2;
+}
+
+:root[data-theme='light'] {
+  --lpd-base: #fbf6ee; // Espuma
+  --lpd-surface: #ffffff; // Porcelana
+  --lpd-surface-2: #f4ecdf;
+  --lpd-border: #e4d8c6; // Aro da Xícara
+  --lpd-text: #2b1d14; // Café Forte
+  --lpd-text-muted: #6e5b47; // Café com Leite
+  --lpd-accent: #a35413; // Âmbar Torrado
+  --lpd-accent-hover: #c06a12;
+  --lpd-on-accent: #ffffff;
+  --lpd-success: #2e8b5c;
+  --lpd-error: #c0392b;
+  --lpd-warning: #b7860b;
+  --lpd-info: #2e6fb0;
+}
+
+:root {
+  // Tipografia — três famílias, três papéis (mono é necessidade funcional)
+  --lpd-font-display: 'Space Grotesk', system-ui, sans-serif;
+  --lpd-font-body: 'Inter', system-ui, sans-serif;
+  --lpd-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+
+  // Raio de borda
+  --lpd-radius-sm: 6px;
+  --lpd-radius-md: 10px;
+  --lpd-radius-lg: 16px;
+  --lpd-radius-full: 999px;
+
+  // Sombras (sutis no dark; o "lift" vem da superfície mais clara)
+  --lpd-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --lpd-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --lpd-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  // O "terminal" (visualizador) é sempre escuro, como um code block —
+  // mesmo no tema claro, para manter o contraste do arquivo.
+  --lpd-term-bg: #0e0b07;
+  --lpd-term-surface: #1f1813;
+  --lpd-term-border: #3a2e24;
+  --lpd-term-text: #f5e9d6;
+  --lpd-term-muted: #6e5c49;
+}
+
+// --- Base -------------------------------------------------------------------
+body {
+  background: var(--lpd-base);
+  color: var(--lpd-text);
+  font-family: var(--lpd-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--lpd-font-display);
+  line-height: 1.2;
+}
+
+// Foco de teclado visível em todos os interativos (WCAG 2.1 AA)
+:focus-visible {
+  outline: 2px solid var(--lpd-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+// Conteúdo posicional sempre monoespaçado
+.lpd-mono {
+  font-family: var(--lpd-font-mono);
+}
+
+// --- Componentes de marca reutilizáveis --------------------------------------
+
+// Botão primário âmbar (CTA)
+.lpd-btn-primary {
+  background: var(--lpd-accent) !important;
+  color: var(--lpd-on-accent) !important;
+  border-radius: var(--lpd-radius-md);
+  font-weight: 500;
+  min-height: 44px; // alvo de toque ≥ 44px
+
+  &:hover {
+    background: var(--lpd-accent-hover) !important;
+  }
+}
+
+// Botão secundário (fantasma com borda)
+.lpd-btn-ghost {
+  background: transparent !important;
+  color: var(--lpd-text) !important;
+  border: 1px solid var(--lpd-border);
+  border-radius: var(--lpd-radius-md);
+  font-weight: 500;
+  min-height: 44px;
+
+  &:hover {
+    background: var(--lpd-surface-2) !important;
+  }
+}
+
+// Badge de status (pílula com ponto colorido)
+.lpd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--lpd-font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--lpd-radius-full);
+  white-space: nowrap;
+
+  &--ok {
+    color: var(--lpd-success);
+    background: rgba(95, 191, 143, 0.14);
+  }
+
+  &--err {
+    color: var(--lpd-error);
+    background: rgba(242, 109, 109, 0.14);
+  }
+
+  &--warn {
+    color: var(--lpd-warning);
+    background: rgba(242, 201, 76, 0.14);
+  }
+}
+
+// Card padrão do produto
+.lpd-card {
+  background: var(--lpd-surface);
+  border: 1px solid var(--lpd-border);
+  border-radius: var(--lpd-radius-lg);
+}
+
+// --- Ajustes de componentes Quasar para a marca -------------------------------
+.q-field--outlined {
+  .q-field__control {
+    background: var(--lpd-surface);
+    border-radius: var(--lpd-radius-sm);
+    color: var(--lpd-text);
+
+    &::before {
+      border-color: var(--lpd-border);
+    }
+  }
+
+  &.q-field--focused .q-field__control::after {
+    border-color: var(--lpd-accent);
+  }
+}
+
+.q-field__label,
+.q-field__messages,
+.q-field__counter {
+  color: var(--lpd-text-muted);
+}
+
+.q-field__native,
+.q-field__input {
+  color: var(--lpd-text);
+}
+
+// Campos posicionais usam mono para alinhar dígitos
+.lpd-field-mono .q-field__native,
+.lpd-field-mono .q-field__input {
+  font-family: var(--lpd-font-mono);
+}
+
+// Notificações no tom do design system
+.lpd-notify {
+  background: var(--lpd-surface-2);
+  color: var(--lpd-text);
+  border-left: 3px solid var(--lpd-success);
+  font-family: var(--lpd-font-body);
+}
+
+// --- Acessibilidade: respeitar prefers-reduced-motion -------------------------
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
