@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "system": "Leiautes Para Devs (Cisne)",
+    "hld_owner": "Pedro Paixão",
+    "version": "2.0.0",
+    "date": "2026-07-04"
+  },
+  "objective": {
+    "technical_goal": "Construir uma SPA puramente client-side para geração em memória de arquivos bancários, aplicando o padrão MVVM para isolar estritamente o motor de leiautes (Core) da interface visual. O sistema resolve o alto acoplamento arquitetural da versão anterior, garantindo uma base sustentável, altamente testável e pronta para escalar novos padrões bancários de forma agnóstica a framework.",
+    "problems_addressed": [
+      "Alto acoplamento arquitetural do protótipo anterior",
+      "Dependência da lógica de negócio em relação à interface visual"
+    ]
+  },
+  "architecture": {
+    "topology_overview": "A topologia segue o padrão MVVM em um ambiente puramente client-side. A camada View contém os componentes visuais Vue isolados. A ViewModel atua como ponte reativa utilizando composables e Pinia. A Model (Core) encapsula a lógica de negócio, regras de formatação e validação em TypeScript puro, mantendo-se totalmente agnóstica a frameworks visuais.",
+    "technologies": [
+      "Vue 3 e Quasar Framework",
+      "TypeScript e Vite",
+      "Pinia",
+      "Vitest e Playwright"
+    ],
+    "deployment": "cloud",
+    "patterns": ["MVVM (Model-View-ViewModel)", "Strategy", "Privacy by Design"]
+  },
+  "components": [
+    {
+      "name": "Motor de Leiautes (Model)",
+      "responsibilities": [
+        "Executar validações puras",
+        "Formatação e regras de negócio",
+        "Aplicar o padrão Strategy"
+      ]
+    },
+    {
+      "name": "Composable de Validação (ViewModel)",
+      "responsibilities": [
+        "Prover ações e estados reativos (ex: validateRcb001)",
+        "Orquestrar as regras do Core para a View"
+      ],
+      "dependencies": ["Motor de Leiautes", "Pinia"]
+    },
+    {
+      "name": "Store de Arquivo (ViewModel)",
+      "responsibilities": [
+        "Gerenciar o estado efêmero do arquivo atual e configurações globais na sessão"
+      ]
+    },
+    {
+      "name": "Formulários e Visualizador (View)",
+      "responsibilities": [
+        "Capturar input do usuário",
+        "Aplicar regras visuais",
+        "Renderizar o arquivo final com virtualização"
+      ],
+      "dependencies": ["Composable de Validação", "Store de Arquivo"]
+    }
+  ],
+  "flows": {
+    "request_flow": [
+      "O usuário interage com os formulários da View, alterando dados de entrada",
+      "A View aciona os composables da ViewModel, que aplicam máscaras e validações oriundas da Model",
+      "O estado do arquivo é atualizado na Store (Pinia) refletindo as mudanças no visualizador em tempo real",
+      "O usuário aciona a exportação, disparando as APIs nativas do navegador para cópia ou download"
+    ],
+    "data_flow": [
+      "View (q-form) -> ViewModel (Composable) -> Store de Sessão (Pinia) -> Motor de Compilação (Model) -> Saída (Clipboard/Blob API)"
+    ]
+  },
+  "data_model": {
+    "entities": [
+      "Arquivo (Raiz)",
+      "Header",
+      "Lote (HeaderLote, RegistrosDetalhe, TrailerLote)",
+      "Trailer"
+    ],
+    "relationships": [
+      "Um Arquivo contém um Header e um Trailer",
+      "Um Arquivo contém um ou múltiplos Lotes",
+      "Um Lote contém um HeaderLote, múltiplos RegistrosDetalhe e um TrailerLote"
+    ],
+    "source_of_truth": "Pinia (estado efêmero em memória na sessão do navegador)"
+  },
+  "interfaces": [
+    {
+      "name": "Clipboard Export",
+      "kind": "api",
+      "protocol": "Clipboard API",
+      "exposure": "external",
+      "sla_limits": "p95 < 5 ms para cópia"
+    },
+    {
+      "name": "File Export",
+      "kind": "api",
+      "protocol": "File/Blob API",
+      "exposure": "external",
+      "sla_limits": "Download instantâneo (.txt, .rem, .ret)"
+    }
+  ],
+  "scalability_availability": {
+    "strategies": [
+      "Foco exclusivo em performance no client-side e alta disponibilidade de entrega dos arquivos estáticos via CDN",
+      "Virtualização de listas no componente visualizador (View) para evitar travamentos",
+      "Otimização da reatividade do Vue para atualizações sob demanda"
+    ],
+    "sla_target": "99.9% uptime mensal para acesso à aplicação estática"
+  },
+  "security": {
+    "authentication": "Nenhuma (sistema de acesso público e aberto)",
+    "authorization": "Nenhuma",
+    "pii_policy": "Privacy by Design: zero tráfego de rede para dados preenchidos e zero persistência em banco de dados. O estado vive 100% de forma efêmera na memória do navegador."
+  },
+  "observability": {
+    "logs": "Erros de execução limitados ao console local do navegador (Developer Tools).",
+    "metrics": [
+      "Métricas técnicas aferidas exclusivamente via pipeline de CI/CD (Vitest/Playwright). Nenhuma coleta de telemetria baseada no uso do usuário em produção."
+    ],
+    "dashboards_alerts": [
+      "Acompanhamento interno via relatórios gerados pela esteira de automação de testes."
+    ]
+  },
+  "risks": [
+    {
+      "risk": "Variações não mapeadas nos padrões FEBRABAN",
+      "probability": "medium",
+      "impact": "geração de arquivos inválidos para determinados bancos em casos de borda.",
+      "mitigation": [
+        "Encapsular a lógica de cada layout usando o padrão Strategy na camada Model.",
+        "Facilitar a criação de subclasses para regras específicas de bancos sem afetar o core principal."
+      ],
+      "contingency_plan": "desabilitar o layout ou regra com erro na View até que o patch seja aprovado na esteira de testes."
+    },
+    {
+      "risk": "Inserção de dados reais/sensíveis pelo usuário",
+      "probability": "medium",
+      "impact": "vazamento não intencional de dados no ambiente local do usuário.",
+      "mitigation": [
+        "Arquitetura de estado efêmero (Pinia sem persistência local).",
+        "Avisos proeminentes na UI educando sobre boas práticas de dados de teste."
+      ],
+      "contingency_plan": "não há tráfego de rede, limitando o escopo do comprometimento à própria máquina do usuário."
+    },
+    {
+      "risk": "Travamento da UI com arquivos pesados",
+      "probability": "low",
+      "impact": "degradação severa da experiência do usuário ao gerar milhares de registros.",
+      "mitigation": [
+        "Implementação de virtualização de listas no renderizador do visualizador de arquivos."
+      ],
+      "contingency_plan": "limitar provisoriamente a quantidade máxima de RegistrosDetalhe criados simultaneamente na interface."
+    },
+    {
+      "risk": "Queda da métrica de cobertura de testes",
+      "probability": "low",
+      "impact": "quebra de confiança nas refatorações e adições de novos layouts.",
+      "mitigation": ["Aplicação rigorosa de TDD orientando o desenvolvimento da camada Core."],
+      "contingency_plan": "bloquear o merge em CI/CD caso a cobertura da camada Model fique abaixo de 85%."
+    }
+  ],
+  "adrs_next_steps": {
+    "adrs": [
+      "ADR 001 - Adoção do padrão MVVM para isolamento estrito do Core Domain",
+      "ADR 002 - Adoção de estado estritamente efêmero no client-side via Pinia, visando aderência total à LGPD"
+    ],
+    "pending_decisions": [
+      "Padronização da estrutura final das interfaces TypeScript a serem exportadas visando integração futura com MCPs."
+    ],
+    "next_steps": [
+      "Setup inicial do repositório (Vite, Quasar, TypeScript).",
+      "Configuração da esteira de testes (Vitest e Playwright).",
+      "Estruturação inicial da camada Model."
+    ]
+  }
+}
