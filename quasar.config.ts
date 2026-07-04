@@ -1,7 +1,8 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
-import { defineConfig } from '#q-app';
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from '#q-app/wrappers';
 
 export default defineConfig((/* ctx */) => {
   return {
@@ -32,6 +33,11 @@ export default defineConfig((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
+      // Alias `@` → src/ (usado em todo o código e nos testes)
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
+
       target: {
         // browser: 'baseline-widely-available',
         // node: 'node22'
@@ -78,12 +84,16 @@ export default defineConfig((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
     devServer: {
       // https: true,
-      open: true, // opens browser window automatically
+      // Não abrir o navegador quando rodando sob Playwright/CI
+      open: !process.env.PLAYWRIGHT && !process.env.CI,
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
     framework: {
-      config: {},
+      config: {
+        // Dark mode é o padrão do produto ("Café + Console")
+        dark: true,
+      },
 
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
@@ -96,7 +106,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: ['Notify'],
     },
 
     // animations: 'all', // --- includes all animations

@@ -1,4 +1,4 @@
-import { defineStore } from '#q-app';
+import { defineStore } from '#q-app/wrappers';
 import { createPinia } from 'pinia';
 
 /*
