@@ -21,7 +21,7 @@ import ThemeToggle from '@/components/ThemeToggle.vue';
           <ThemeToggle />
           <a
             class="shell__nav-link"
-            href="https://github.com/ratto/leiautes-para-devs"
+            href="https://github.com/ratto/leiautes-devs"
             target="_blank"
             rel="noopener"
             >GitHub</a
