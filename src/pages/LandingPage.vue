@@ -155,7 +155,8 @@ function segmentClass(field: string): Record<string, boolean> {
 341000100012345?????????
 "era 9 ou 12 dígitos no valor?"
 "esse campo alinha à esquerda?"
-"faltou um zero... de novo."</pre>
+"faltou um zero... de novo."</pre
+          >
         </div>
         <div class="compare__pane compare__pane--after">
           <h3><span aria-hidden="true">✓</span> Agora — no Leiautes Para Devs</h3>
@@ -163,7 +164,8 @@ function segmentClass(field: string): Record<string, boolean> {
      1         11        21
 01 3410001000123450000150000
 campos validados pelas rules
-do Quasar · baixe em segundos</pre>
+do Quasar · baixe em segundos</pre
+          >
         </div>
       </div>
     </section>
@@ -222,7 +224,7 @@ do Quasar · baixe em segundos</pre>
           <p>
             Não há banco de dados, não há conta, não há servidor guardando nada. Tudo vive em
             memória (Pinia) pelo tempo da sessão e é apagado quando você fecha a aba. Pode preencher
-            dados de teste à vontade — isso é uma decisão de arquitetura, não um rodapé.
+            dados de teste à vontade — isso é uma decisão de arquitetura, não é um rodapé.
           </p>
         </div>
       </div>
@@ -246,7 +248,7 @@ do Quasar · baixe em segundos</pre>
           <h3>Rafael</h3>
           <p>
             Testa o módulo financeiro. Desliga a validação e gera arquivos malformados de propósito
-            para ver como o sistema-alvo se comporta.
+            para ver como o sistema que está sendo desenvolvido se comporta.
           </p>
         </div>
         <div class="card card--persona">
@@ -262,7 +264,7 @@ do Quasar · baixe em segundos</pre>
 
     <!-- CTA FINAL -->
     <section class="final">
-      <h2>Pega o café e gera o seu arquivo. ☕</h2>
+      <h2>Pega o café e gere o seu arquivo. ☕</h2>
       <p>Grátis, open-source e direto no navegador.</p>
       <router-link to="/gerador" class="btn btn--primary">
         <span aria-hidden="true">▸</span> Gerar meu arquivo
