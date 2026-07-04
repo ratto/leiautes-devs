@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leiautes Para Devs — arquivos bancários FEBRABAN para testar seus sistemas</title>
+<meta name="description" content="Gere arquivos RCB001, CNAB240 e CNAB400 para testar seus sistemas. Roda no navegador, nada é salvo (LGPD). Feito por dev, para dev — movido a café extra-forte.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#14100B; --surface:#1F1813; --surface-2:#2A211A; --border:#3A2E24;
+    --text:#F5E9D6; --muted:#B6A28C; --accent:#F2A03D; --accent-hover:#FFB454;
+    --on-accent:#1A1109; --success:#5FBF8F; --error:#F26D6D; --warning:#F2C94C; --info:#6DA8F2;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono',monospace;
+    --maxw:1200px; --radius:10px; --radius-lg:16px;
+    /* terminal: sempre escuro, em qualquer tema (como um code block) */
+    --term-bg:#0E0B07; --term-surface:#1F1813; --term-border:#3A2E24;
+    --term-text:#F5E9D6; --term-muted:#6E5C49;
+  }
+  [data-theme="light"]{
+    --base:#FBF6EE; --surface:#FFFFFF; --surface-2:#F4ECDF; --border:#E4D8C6;
+    --text:#2B1D14; --muted:#6E5B47; --accent:#A35413; --accent-hover:#C06A12;
+    --on-accent:#FFFFFF; --success:#2E8B5C; --error:#C0392B; --warning:#B7860B; --info:#2E6FB0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--base);color:var(--text);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.15}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--base) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .nav-in{display:flex;align-items:center;gap:20px;height:64px}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:17px}
+  .brand .cup{font-size:20px}
+  .nav-links{display:flex;gap:22px;margin-left:auto;font-size:15px;color:var(--muted)}
+  .nav-links a:hover{color:var(--text)}
+  .nav-actions{display:flex;align-items:center;gap:10px}
+  .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);color:var(--text);cursor:pointer;font-size:17px}
+  .icon-btn:hover{background:var(--surface-2)}
+  @media(max-width:760px){.nav-links{display:none}}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 20px;border-radius:var(--radius);font-family:var(--font-body);font-weight:500;font-size:15px;cursor:pointer;border:1px solid transparent;transition:background .15s ease,transform .1s ease}
+  .btn-primary{background:var(--accent);color:var(--on-accent)}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text)}
+  .btn-ghost:hover{background:var(--surface-2)}
+
+  /* HERO */
+  .hero{padding:72px 0 84px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:54px;align-items:center}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--accent);background:var(--surface);border:1px solid var(--border);padding:6px 12px;border-radius:999px;margin-bottom:22px}
+  .hero h1{font-size:clamp(34px,5vw,52px);letter-spacing:-.5px}
+  .hero h1 .hl{color:var(--accent)}
+  .hero p.sub{font-size:19px;color:var(--muted);margin:20px 0 30px;max-width:42ch}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+  .hero-note{margin-top:18px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  @media(max-width:900px){.hero-grid{grid-template-columns:1fr;gap:40px}.hero{padding:48px 0 56px}}
+
+  /* TERMINAL (signature) */
+  .term{background:var(--term-bg);border:1px solid var(--term-border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:11px 15px;background:var(--term-surface);border-bottom:1px solid var(--term-border)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .term-title{font-family:var(--font-mono);font-size:12px;color:var(--term-muted);margin-left:6px}
+  .vbadge{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;padding:4px 10px;border-radius:999px}
+  .vbadge.on{color:var(--success);background:rgba(95,191,143,.12)}
+  .vbadge.off{color:var(--warning);background:rgba(242,201,76,.12)}
+  .term-body{padding:16px;font-family:var(--font-mono);font-size:12.5px;line-height:1.85}
+  .ruler{color:var(--term-muted);white-space:pre;user-select:none}
+  .code{white-space:pre;color:var(--term-text)}
+  .code .ln{color:var(--term-muted);user-select:none}
+  .seg{border-radius:3px;padding:1px 0;transition:background .15s ease,color .15s ease}
+  .seg.hot{background:rgba(242,160,61,.22);color:var(--accent-hover)}
+  .seg.bad{background:rgba(242,109,109,.22);color:var(--error)}
+  .term-foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--term-border);flex-wrap:wrap}
+  .switch{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:var(--term-muted);cursor:pointer;font-family:var(--font-body)}
+  .track{width:38px;height:22px;border-radius:999px;background:#4a3a2a;position:relative;transition:background .2s ease}
+  .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#F5E9D6;transition:transform .2s ease}
+  .switch[aria-pressed="true"] .track{background:var(--accent)}
+  .switch[aria-pressed="true"] .track::after{transform:translateX(16px)}
+  .term-gen{margin-left:auto;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:8px;background:var(--accent);color:var(--on-accent);font-family:var(--font-body);font-weight:500;font-size:13px;border:none;cursor:pointer}
+  .term-gen:hover{background:var(--accent-hover)}
+  .legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+  .chip{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:999px;cursor:default}
+  .chip[data-field]{cursor:pointer}
+  .chip:hover{color:var(--text);border-color:var(--accent)}
+
+  /* SECTIONS */
+  .block{padding:80px 0;border-top:1px solid var(--border)}
+  .lead{font-family:var(--font-mono);font-size:13px;color:var(--accent);letter-spacing:.04em;margin-bottom:12px}
+  .block h2{font-size:clamp(26px,3.4vw,36px);letter-spacing:-.4px;max-width:20ch}
+  .block .desc{color:var(--muted);font-size:17px;margin-top:14px;max-width:62ch}
+
+  /* COMPARE */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:36px}
+  .pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+  .pane h3{font-size:16px;font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .pane.before h3{color:var(--error)}
+  .pane.after h3{color:var(--success)}
+  .pane pre{font-family:var(--font-mono);font-size:12px;line-height:1.8;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+  .pane.after pre{color:var(--text)}
+  @media(max-width:760px){.compare{grid-template-columns:1fr}}
+
+  /* FEATURES / PERSONAS */
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+  .card .ic{font-size:24px;margin-bottom:14px;display:block}
+  .card h3{font-size:18px;font-weight:600;margin-bottom:9px}
+  .card p{color:var(--muted);font-size:15px}
+  .persona .who{font-family:var(--font-mono);font-size:12px;color:var(--accent);margin-bottom:6px}
+
+  /* LEIAUTES */
+  .layouts{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
+  .lay{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:14px;background:var(--surface);border:1px solid var(--border);padding:12px 18px;border-radius:var(--radius)}
+  .lay .tag{font-size:11px;color:var(--success)}
+  .lay.soon{color:var(--muted)}
+  .lay.soon .tag{color:var(--muted)}
+
+  /* PRIVACY */
+  .privacy{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;display:flex;gap:28px;align-items:flex-start;margin-top:8px}
+  .privacy .lock{font-size:34px;color:var(--info);flex-shrink:0}
+  .privacy h2{font-size:clamp(24px,3vw,32px);margin-bottom:12px}
+  .privacy p{color:var(--muted);font-size:17px;max-width:60ch}
+  @media(max-width:640px){.privacy{flex-direction:column;padding:28px}}
+
+  /* FINAL CTA */
+  .final{text-align:center;padding:96px 0}
+  .final h2{font-size:clamp(28px,4vw,42px);margin-bottom:16px}
+  .final p{color:var(--muted);font-size:18px;margin-bottom:30px}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:40px 0;color:var(--muted);font-size:14px}
+  .foot-in{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+  .foot-links{display:flex;gap:18px}
+  .foot-links a:hover{color:var(--text)}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#"><span class="cup" aria-hidden="true">☕</span> Leiautes Para Devs</a>
+    <nav class="nav-links">
+      <a href="#como">Como funciona</a>
+      <a href="#leiautes">Leiautes</a>
+      <a href="#privacidade">Privacidade</a>
+      <a href="#quem">Para quem é</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" aria-label="Alternar tema claro e escuro" title="Darkmode... por sua culpa, Erick!">🌙</button>
+      <a class="btn btn-ghost" href="https://github.com/ratto/leiautes-para-devs" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><span aria-hidden="true">●</span> open-source · roda no seu navegador</span>
+        <h1>Arquivos bancários <span class="hl">FEBRABAN</span>, gerados na força de um espresso.</h1>
+        <p class="sub">RCB001, CNAB240 e CNAB400 prontos para testar seus sistemas. Sem montar na unha, sem login e sem deixar dado em lugar nenhum.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#"><span aria-hidden="true">☕</span> Gerar meu arquivo</a>
+          <a class="btn btn-ghost" href="#como">Ver como funciona</a>
+        </div>
+        <p class="hero-note"><span aria-hidden="true">🔒</span> Seus dados nunca saem do seu navegador — aderência à LGPD.</p>
+      </div>
+
+      <!-- SIGNATURE: visualizador monoespaçado -->
+      <div class="term" role="img" aria-label="Visualizador de um arquivo CNAB com régua de posições e validação ligada ou desligada.">
+        <div class="term-bar">
+          <span class="dot" style="background:#F26D6D"></span>
+          <span class="dot" style="background:#F2C94C"></span>
+          <span class="dot" style="background:#5FBF8F"></span>
+          <span class="term-title">remessa_cnab240.rem</span>
+          <span class="vbadge on" id="vbadge"><span aria-hidden="true">✓</span> validação: on</span>
+        </div>
+        <div class="term-body">
+          <div class="ruler" aria-hidden="true">     1         11        21        31        41</div>
+          <div class="ruler" aria-hidden="true">     |         |         |         |         |</div>
+          <div class="code"><span class="ln">01 </span><span class="seg" data-field="banco">341</span><span class="seg" data-field="lote">0001</span>3REMESSA<span class="seg" data-field="empresa">EMPRESATESTELTDA</span></div>
+          <div class="code"><span class="ln">02 </span><span class="seg" data-field="banco">341</span><span class="seg" data-field="conta">000012345</span><span class="seg" data-field="valor" id="seg-valor">000000150000</span><span class="seg" data-field="venc">15062026</span></div>
+          <div class="code"><span class="ln">03 </span>9TRAILER<span class="seg" data-field="qtd">000003</span><span class="seg" data-field="total">000000150000</span></div>
+        </div>
+        <div class="term-foot">
+          <button class="switch" id="vswitch" aria-pressed="true" aria-label="Habilitar ou desabilitar a validação por campo">
+            <span class="track" aria-hidden="true"></span> validação por campo
+          </button>
+          <button class="term-gen" id="gen"><span aria-hidden="true">▸</span> Gerar arquivo</button>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="legend" id="legend">
+        <span class="chip" data-field="banco">banco</span>
+        <span class="chip" data-field="lote">lote</span>
+        <span class="chip" data-field="empresa">empresa</span>
+        <span class="chip" data-field="conta">conta</span>
+        <span class="chip" data-field="valor">valor</span>
+        <span class="chip" data-field="venc">vencimento</span>
+        <span class="chip">↑ passe o mouse para destacar o campo no arquivo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA / PROBLEMA → SOLUÇÃO -->
+  <section class="block" id="como">
+    <div class="wrap">
+      <p class="lead">o problema</p>
+      <h2>Montar arquivo bancário na unha é contar caractere por caractere.</h2>
+      <p class="desc">Cada posição importa. Um espaço a mais e o banco rejeita o arquivo. O Leiautes Para Devs monta as posições por você e mostra tudo num visualizador monoespaçado com régua — você confere de bater o olho.</p>
+      <div class="compare">
+        <div class="pane before">
+          <h3><span aria-hidden="true">✗</span> Antes — no editor de texto</h3>
+          <pre>341000100012345?????????
+"era 9 ou 12 dígitos no valor?"
+"esse campo alinha à esquerda?"
+"faltou um zero... de novo."</pre>
+        </div>
+        <div class="pane after">
+          <h3><span aria-hidden="true">✓</span> Agora — no Leiautes Para Devs</h3>
+          <pre>     1         11        21
+01 3410001000123450000150000
+campos validados pelas rules
+do Quasar · baixe em segundos</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="block">
+    <div class="wrap">
+      <p class="lead">por que usar</p>
+      <h2>Feito para o seu fluxo de teste.</h2>
+      <div class="grid3">
+        <div class="card">
+          <span class="ic" aria-hidden="true">⚡</span>
+          <h3>Geração em segundos</h3>
+          <p>RCB001, CNAB240 e CNAB400, remessa e retorno. Da página aberta ao arquivo baixado em menos de um minuto.</p>
+        </div>
+        <div class="card">
+          <span class="ic" aria-hidden="true">🎚️</span>
+          <h3>Validação que liga e desliga</h3>
+          <p>Ligada, garante arquivos confiáveis. Desligada, deixa você <strong style="color:var(--text);font-weight:500">forçar erros de propósito</strong> para testar como seu sistema reage.</p>
+        </div>
+        <div class="card">
+          <span class="ic" aria-hidden="true">🔒</span>
+          <h3>Privado por arquitetura</h3>
+          <p>Roda no navegador, sem backend. O estado vive só na sessão (Pinia) e some quando você fecha a aba. LGPD por design.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEIAUTES -->
+  <section class="block" id="leiautes">
+    <div class="wrap">
+      <p class="lead">leiautes</p>
+      <h2>Padrões homologados pela FEBRABAN.</h2>
+      <p class="desc">Começando pelos mais pedidos — e crescendo a cada release.</p>
+      <div class="layouts">
+        <span class="lay"><strong>RCB001</strong> <span class="tag">disponível</span></span>
+        <span class="lay"><strong>CNAB240</strong> <span class="tag">disponível</span></span>
+        <span class="lay"><strong>CNAB400</strong> <span class="tag">disponível</span></span>
+        <span class="lay soon"><strong>+ mais</strong> <span class="tag">em breve</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRIVACIDADE -->
+  <section class="block" id="privacidade">
+    <div class="wrap">
+      <div class="privacy">
+        <span class="lock" aria-hidden="true">🔒</span>
+        <div>
+          <h2>Seus dados nunca saem do seu navegador.</h2>
+          <p>Não há banco de dados, não há conta, não há servidor guardando nada. Tudo vive em memória (Pinia) pelo tempo da sessão e é apagado quando você fecha a aba. Pode preencher dados de teste à vontade — isso é uma decisão de arquitetura, não um rodapé.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARA QUEM É -->
+  <section class="block" id="quem">
+    <div class="wrap">
+      <p class="lead">para quem é</p>
+      <h2>Quem vive de integração bancária.</h2>
+      <div class="grid3">
+        <div class="card persona">
+          <p class="who">desenvolvedora</p>
+          <h3>Marina</h3>
+          <p>Constrói o parser de retorno do banco. Precisa de dezenas de variações para cobrir casos de teste — com a validação ligada, todas válidas.</p>
+        </div>
+        <div class="card persona">
+          <p class="who">qa / tester</p>
+          <h3>Rafael</h3>
+          <p>Testa o módulo financeiro. Desliga a validação e gera arquivos malformados de propósito para ver como o sistema-alvo se comporta.</p>
+        </div>
+        <div class="card persona">
+          <p class="who">implantação</p>
+          <h3>Cláudia</h3>
+          <p>Homologa a importação de clientes novos. Simula a remessa do cliente com clareza visual e exportação confiável.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final">
+    <div class="wrap">
+      <h2>Pega o café e gera o seu arquivo. ☕</h2>
+      <p>Grátis, open-source e direto no navegador.</p>
+      <a class="btn btn-primary" href="#"><span aria-hidden="true">▸</span> Gerar meu arquivo</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>☕ Leiautes Para Devs — feito por dev, para dev, com café extra-forte.</span>
+    <div class="foot-links">
+      <a href="https://github.com/ratto/leiautes-para-devs" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/pedro-tosta-paixao/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://www.paypal.com/donate/?hosted_button_id=8RE442ASFC2PS" target="_blank" rel="noopener">Apoiar ☕</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    var tt=document.getElementById('theme-toggle');
+    tt.addEventListener('click',function(){
+      var light=root.getAttribute('data-theme')==='light';
+      root.setAttribute('data-theme',light?'dark':'light');
+      tt.textContent=light?'🌙':'☀️';
+    });
+
+    // Destaque de campo: legenda <-> visualizador (assinatura)
+    function segs(f){return document.querySelectorAll('.seg[data-field="'+f+'"]');}
+    document.querySelectorAll('.chip[data-field]').forEach(function(c){
+      var f=c.getAttribute('data-field');
+      c.addEventListener('mouseenter',function(){segs(f).forEach(function(s){if(!s.classList.contains('bad'))s.classList.add('hot');});});
+      c.addEventListener('mouseleave',function(){segs(f).forEach(function(s){s.classList.remove('hot');});});
+    });
+
+    // Toggle de validação: válido <-> erro forçado
+    var sw=document.getElementById('vswitch');
+    var badge=document.getElementById('vbadge');
+    var valor=document.getElementById('seg-valor');
+    var VALID='000000150000', FORCED='0000ABC50000';
+    function applyValidation(on){
+      sw.setAttribute('aria-pressed',on?'true':'false');
+      if(on){
+        badge.className='vbadge on';badge.innerHTML='<span aria-hidden="true">\u2713</span> validação: on';
+        valor.textContent=VALID;valor.classList.remove('bad');valor.removeAttribute('title');
+      }else{
+        badge.className='vbadge off';badge.innerHTML='<span aria-hidden="true">!</span> validação: off';
+        valor.textContent=FORCED;valor.classList.add('bad');valor.setAttribute('title','campo inválido (forçado para teste)');
+      }
+    }
+    sw.addEventListener('click',function(){applyValidation(sw.getAttribute('aria-pressed')!=='true');});
+
+    // Gerar: breve varredura de destaque (respeita reduced-motion)
+    var gen=document.getElementById('gen');
+    var reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    gen.addEventListener('click',function(){
+      var all=Array.prototype.slice.call(document.querySelectorAll('.term-body .seg'));
+      if(reduce)return;
+      all.forEach(function(s){s.classList.remove('hot');});
+      all.forEach(function(s,i){setTimeout(function(){
+        if(s.classList.contains('bad'))return;
+        s.classList.add('hot');setTimeout(function(){s.classList.remove('hot');},220);
+      },i*70);});
+    });
+  })();
+</script>
+</body>
+</html>

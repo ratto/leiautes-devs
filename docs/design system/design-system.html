@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System — Leiautes Para Devs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#14100B; --surface:#1F1813; --surface-2:#2A211A; --border:#3A2E24;
+    --text:#F5E9D6; --muted:#B6A28C; --accent:#F2A03D; --accent-hover:#FFB454;
+    --on-accent:#1A1109; --success:#5FBF8F; --error:#F26D6D; --warning:#F2C94C; --info:#6DA8F2;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Inter',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono',monospace;
+    --radius-sm:6px; --radius:10px; --radius-lg:16px;
+  }
+  [data-theme="light"]{
+    --base:#FBF6EE; --surface:#FFFFFF; --surface-2:#F4ECDF; --border:#E4D8C6;
+    --text:#2B1D14; --muted:#6E5B47; --accent:#A35413; --accent-hover:#C06A12;
+    --on-accent:#FFFFFF; --success:#2E8B5C; --error:#C0392B; --warning:#B7860B; --info:#2E6FB0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--base);color:var(--text);font-family:var(--font-body);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  h1,h2,h3{font-family:var(--font-display);font-weight:700;line-height:1.2}
+  code{font-family:var(--font-mono);font-size:.85em}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+  header{border-bottom:1px solid var(--border);padding:34px 0}
+  .head-in{display:flex;align-items:center;gap:16px}
+  .brand{font-family:var(--font-display);font-weight:700;font-size:22px;display:flex;align-items:center;gap:9px}
+  .ver{font-family:var(--font-mono);font-size:12px;color:var(--muted);border:1px solid var(--border);padding:3px 9px;border-radius:999px}
+  .icon-btn{margin-left:auto;width:40px;height:40px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);color:var(--text);cursor:pointer;font-size:17px}
+  .icon-btn:hover{background:var(--surface-2)}
+
+  section{padding:44px 0;border-bottom:1px solid var(--border)}
+  .lead{font-family:var(--font-mono);font-size:12px;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+  section h2{font-size:24px;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:15px;margin-bottom:24px}
+
+  /* palette */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:14px}
+  .sw .chip{height:56px;border-radius:var(--radius);border:1px solid var(--border)}
+  .sw .nm{font-size:13px;font-weight:500;margin-top:8px}
+  .sw .hex{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+  .pal-title{font-size:14px;font-weight:600;margin:6px 0 14px;color:var(--text)}
+  .pal-title:not(:first-child){margin-top:28px}
+
+  /* type */
+  .type-row{padding:14px 0;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .type-row:last-child{border-bottom:none}
+  .type-meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);min-width:150px}
+
+  /* tokens */
+  .tok{display:flex;flex-wrap:wrap;gap:12px}
+  .tok .item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+  .tok .item b{color:var(--text);font-weight:500}
+  .radius-demo{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .radius-demo span{width:72px;height:48px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+
+  /* component gallery */
+  .demo{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-top:8px}
+  .demo + .demo{margin-top:18px}
+  .demo .cap{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-bottom:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border-radius:var(--radius);font-family:var(--font-body);font-weight:500;font-size:14px;cursor:pointer;border:1px solid transparent}
+  .btn-primary{background:var(--accent);color:var(--on-accent)}
+  .btn-primary:hover{background:var(--accent-hover)}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text)}
+  .btn-ghost:hover{background:var(--surface-2)}
+  .btn-danger{background:transparent;border-color:var(--error);color:var(--error)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  .field{max-width:320px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .field input{width:100%;height:44px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-mono);font-size:14px;padding:0 12px}
+  .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(242,160,61,.18)}
+  .field.err input{border-color:var(--error)}
+  .field .hint{font-size:12px;margin-top:6px;color:var(--muted)}
+  .field.err .hint{color:var(--error)}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .lchip{font-family:var(--font-mono);font-size:13px;padding:7px 14px;border-radius:999px;background:var(--surface-2);color:var(--muted);border:1px solid var(--border);cursor:pointer}
+  .lchip.active{background:var(--accent);color:var(--on-accent);border-color:transparent}
+
+  .rec{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .rec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);cursor:pointer}
+  .rec-head .chev{transition:transform .2s ease;color:var(--muted)}
+  .rec.open .chev{transform:rotate(90deg)}
+  .rec-body{padding:14px;display:none;font-size:14px;color:var(--muted)}
+  .rec.open .rec-body{display:block}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;padding:4px 10px;border-radius:999px}
+  .badge.ok{color:var(--success);background:rgba(95,191,143,.14)}
+  .badge.err{color:var(--error);background:rgba(242,109,109,.14)}
+  .badge.warn{color:var(--warning);background:rgba(242,201,76,.14)}
+
+  .viewer{background:#0E0B07;border:1px solid #3A2E24;border-radius:var(--radius);padding:14px;font-family:var(--font-mono);font-size:12.5px;line-height:1.85;color:#F5E9D6}
+  .viewer .ruler{color:#6E5C49;white-space:pre}
+  .viewer .hl{background:rgba(242,160,61,.22);color:var(--accent-hover);border-radius:3px}
+
+  .switch{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:var(--font-body)}
+  .track{width:38px;height:22px;border-radius:999px;background:#5a4632;position:relative;transition:background .2s ease}
+  [data-theme="light"] .track{background:#cdbfa9}
+  .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s ease}
+  .switch[aria-pressed="true"] .track{background:var(--accent)}
+  .switch[aria-pressed="true"] .track::after{transform:translateX(16px)}
+
+  .seal{display:inline-flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--muted)}
+  .seal .lk{color:var(--info)}
+  .toast{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-left:3px solid var(--success);border-radius:var(--radius-sm);padding:12px 16px;font-size:14px;max-width:360px}
+
+  pre.css{background:#0E0B07;border:1px solid #3A2E24;border-radius:var(--radius);padding:16px;overflow:auto;font-family:var(--font-mono);font-size:12px;line-height:1.7;color:#F5E9D6}
+  .note{font-size:13px;color:var(--muted);margin-top:10px}
+  footer{padding:34px 0;color:var(--muted);font-size:13px;text-align:center}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-in">
+    <span class="brand"><span aria-hidden="true">☕</span> Design System</span>
+    <span class="ver">Leiautes Para Devs · v1.0</span>
+    <button class="icon-btn" id="theme-toggle" aria-label="Alternar tema" title="Darkmode... por sua culpa, Erick!">🌙</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- PALETA -->
+  <section>
+    <p class="lead">01 · cor</p>
+    <h2>Paleta café + console</h2>
+    <p class="sub">Torra escura nos fundos, crema no texto, âmbar de caramelo na ação. Todos os pares texto/fundo validados em WCAG AA.</p>
+
+    <p class="pal-title">Tema escuro (padrão)</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#14100B"></div><div class="nm">Café Preto</div><div class="hex">#14100B</div></div>
+      <div class="sw"><div class="chip" style="background:#1F1813"></div><div class="nm">Espresso</div><div class="hex">#1F1813</div></div>
+      <div class="sw"><div class="chip" style="background:#2A211A"></div><div class="nm">Torra Média</div><div class="hex">#2A211A</div></div>
+      <div class="sw"><div class="chip" style="background:#F5E9D6"></div><div class="nm">Crema</div><div class="hex">#F5E9D6</div></div>
+      <div class="sw"><div class="chip" style="background:#B6A28C"></div><div class="nm">Leite Vaporizado</div><div class="hex">#B6A28C</div></div>
+      <div class="sw"><div class="chip" style="background:#F2A03D"></div><div class="nm">Âmbar</div><div class="hex">#F2A03D</div></div>
+    </div>
+
+    <p class="pal-title">Tema claro</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#FBF6EE"></div><div class="nm">Espuma</div><div class="hex">#FBF6EE</div></div>
+      <div class="sw"><div class="chip" style="background:#FFFFFF"></div><div class="nm">Porcelana</div><div class="hex">#FFFFFF</div></div>
+      <div class="sw"><div class="chip" style="background:#2B1D14"></div><div class="nm">Café Forte</div><div class="hex">#2B1D14</div></div>
+      <div class="sw"><div class="chip" style="background:#A35413"></div><div class="nm">Âmbar Torrado</div><div class="hex">#A35413</div></div>
+      <div class="sw"><div class="chip" style="background:#E4D8C6"></div><div class="nm">Aro da Xícara</div><div class="hex">#E4D8C6</div></div>
+    </div>
+
+    <p class="pal-title">Feedback</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#5FBF8F"></div><div class="nm">Sucesso</div><div class="hex">#5FBF8F</div></div>
+      <div class="sw"><div class="chip" style="background:#F26D6D"></div><div class="nm">Erro</div><div class="hex">#F26D6D</div></div>
+      <div class="sw"><div class="chip" style="background:#F2C94C"></div><div class="nm">Aviso</div><div class="hex">#F2C94C</div></div>
+      <div class="sw"><div class="chip" style="background:#6DA8F2"></div><div class="nm">Info</div><div class="hex">#6DA8F2</div></div>
+    </div>
+  </section>
+
+  <!-- TIPOGRAFIA -->
+  <section>
+    <p class="lead">02 · tipografia</p>
+    <h2>Três famílias, três papéis</h2>
+    <p class="sub">Mono é necessidade funcional: registros CNAB/RCB são de largura fixa.</p>
+    <div class="type-row"><span class="type-meta">Space Grotesk · display</span><span style="font-family:var(--font-display);font-weight:700;font-size:32px">Leiautes Para Devs</span></div>
+    <div class="type-row"><span class="type-meta">Inter · corpo/UI</span><span style="font-size:17px">Gere arquivos bancários FEBRABAN para testar seus sistemas.</span></div>
+    <div class="type-row"><span class="type-meta">JetBrains Mono · dados</span><span style="font-family:var(--font-mono);font-size:14px">02RET001234567890COBRANCA000150000</span></div>
+  </section>
+
+  <!-- TOKENS -->
+  <section>
+    <p class="lead">03 · layout</p>
+    <h2>Espaçamento e raio</h2>
+    <p class="sub">Escala base 8px.</p>
+    <div class="tok">
+      <span class="item"><b>4</b> · 4px</span><span class="item"><b>8</b> · 8px</span><span class="item"><b>12</b> · 12px</span>
+      <span class="item"><b>16</b> · 16px</span><span class="item"><b>24</b> · 24px</span><span class="item"><b>32</b> · 32px</span>
+      <span class="item"><b>48</b> · 48px</span><span class="item"><b>64</b> · 64px</span>
+    </div>
+    <div class="radius-demo">
+      <span style="border-radius:6px">sm 6</span>
+      <span style="border-radius:10px">md 10</span>
+      <span style="border-radius:16px">lg 16</span>
+      <span style="border-radius:999px">full</span>
+    </div>
+  </section>
+
+  <!-- COMPONENTES -->
+  <section>
+    <p class="lead">04 · componentes</p>
+    <h2>Galeria</h2>
+    <p class="sub">Os componentes-assinatura: visualizador monoespaçado, registro-detalhe e o toggle de validação.</p>
+
+    <div class="demo">
+      <div class="cap">botões</div>
+      <div class="row">
+        <button class="btn btn-primary"><span aria-hidden="true">☕</span> Gerar arquivo</button>
+        <button class="btn btn-ghost">Copiar</button>
+        <button class="btn btn-danger">Remover registro</button>
+        <button class="btn btn-ghost" disabled>Indisponível</button>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">inputs &amp; validação (atributo <code>rules</code> do Quasar)</div>
+      <div class="row" style="align-items:flex-start">
+        <div class="field">
+          <label>Valor recebido</label>
+          <input value="000000150000">
+          <div class="hint">12 dígitos · alinhado à direita.</div>
+        </div>
+        <div class="field err">
+          <label>Valor da tarifa</label>
+          <input value="00ABC8">
+          <div class="hint">Esperado 10 dígitos numéricos, recebido 6.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">seletor de leiaute</div>
+      <div class="chips" id="lay-chips">
+        <button class="lchip active">RCB001</button>
+        <button class="lchip">CNAB240</button>
+        <button class="lchip">CNAB400</button>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">card de registro-detalhe (abre/fecha confiável)</div>
+      <div class="rec open" id="rec1">
+        <div class="rec-head"><span class="chev" aria-hidden="true">▸</span> <strong style="font-weight:500">Registro 001</strong> <span class="badge ok"><span aria-hidden="true">✓</span> válido</span></div>
+        <div class="rec-body">Banco 341 · Conta 000012345 · Valor 000000150000 · Vencimento 15062026</div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">visualizador de arquivo · régua de posições + destaque de campo</div>
+      <div class="viewer">
+        <div class="ruler" aria-hidden="true">     1         11        21        31</div>
+        <div>01 341<span class="hl">0001</span>3REMESSAEMPRESATESTE</div>
+        <div>02 341000012345<span class="hl">000000150000</span>15062026</div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">toggle de validação (on/off) · badges de status</div>
+      <div class="row">
+        <button class="switch" id="vswitch" aria-pressed="true" aria-label="Habilitar ou desabilitar validação"><span class="track" aria-hidden="true"></span> validação por campo</button>
+        <span class="badge ok" id="vb"><span aria-hidden="true">✓</span> validação: on</span>
+        <span class="badge err"><span aria-hidden="true">✗</span> erro</span>
+        <span class="badge warn"><span aria-hidden="true">!</span> aviso</span>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="cap">selo de privacidade (LGPD) · toast</div>
+      <div class="row">
+        <span class="seal"><span class="lk" aria-hidden="true">🔒</span> Seus dados nunca saem do seu navegador.</span>
+        <span class="toast"><span aria-hidden="true">☕</span> Arquivo gerado. Bom teste!</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOKENS CSS -->
+  <section>
+    <p class="lead">05 · tokens</p>
+    <h2>CSS variables (tema escuro)</h2>
+    <p class="sub">Cole no projeto e mapeie na sua ferramenta de Design.</p>
+    <pre class="css">:root[data-theme="dark"]{
+  --lpd-base:#14100B; --lpd-surface:#1F1813; --lpd-surface-2:#2A211A;
+  --lpd-border:#3A2E24; --lpd-text:#F5E9D6; --lpd-text-muted:#B6A28C;
+  --lpd-accent:#F2A03D; --lpd-accent-hover:#FFB454; --lpd-on-accent:#1A1109;
+  --lpd-success:#5FBF8F; --lpd-error:#F26D6D; --lpd-warning:#F2C94C; --lpd-info:#6DA8F2;
+  --lpd-font-display:'Space Grotesk',sans-serif;
+  --lpd-font-body:'Inter',sans-serif;
+  --lpd-font-mono:'JetBrains Mono',monospace;
+}</pre>
+    <p class="note">A interface é exclusivamente PT-BR (sem i18n). Identificadores em inglês, comentários em PT-BR.</p>
+  </section>
+</main>
+
+<footer>☕ Leiautes Para Devs — Design System v1.0 · feito com café extra-forte</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement, tt=document.getElementById('theme-toggle');
+    tt.addEventListener('click',function(){
+      var light=root.getAttribute('data-theme')==='light';
+      root.setAttribute('data-theme',light?'dark':'light');
+      tt.textContent=light?'🌙':'☀️';
+    });
+    document.querySelectorAll('#lay-chips .lchip').forEach(function(c){
+      c.addEventListener('click',function(){
+        document.querySelectorAll('#lay-chips .lchip').forEach(function(x){x.classList.remove('active')});
+        c.classList.add('active');
+      });
+    });
+    var rec=document.getElementById('rec1');
+    rec.querySelector('.rec-head').addEventListener('click',function(){rec.classList.toggle('open')});
+    var sw=document.getElementById('vswitch'), vb=document.getElementById('vb');
+    sw.addEventListener('click',function(){
+      var on=sw.getAttribute('aria-pressed')!=='true';
+      sw.setAttribute('aria-pressed',on?'true':'false');
+      vb.className='badge '+(on?'ok':'warn');
+      vb.innerHTML=on?'<span aria-hidden="true">\u2713</span> validação: on':'<span aria-hidden="true">!</span> validação: off';
+    });
+  })();
+</script>
+</body>
+</html>
