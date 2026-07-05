@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "product_or_system": "leiautes-devs",
+    "feature_name": "Correção Estrutural e Semântica do Motor CNAB240",
+    "fdd_owner": "Desenvolvedor Principal",
+    "version": "1.0.0",
+    "date": "2026-07-04"
+  },
+  "context": {
+    "technical_motivation": "A feature atualiza a estratégia cnab240.ts no ecossistema do leiautes-devs para garantir conformidade estrita com o leiaute FEBRABAN. Ela resolve problemas críticos de perda de dados em arquivos de retorno (ausência de motivos de rejeição/liquidação) e corrige a estrutura de campos em arquivos de remessa.",
+    "fit_with_hld": "Motor de geração e leitura de layouts bancários, especificamente integração da estratégia cnab240.ts com generator.ts.",
+    "actors": [
+      "Sistema gerador de arquivos",
+      "Sistema leitor de arquivos",
+      "Módulo generator.ts",
+      "Instituições bancárias validadoras"
+    ],
+    "assumptions": [
+      "Premissa de 1 lote por arquivo",
+      "Juros e descontos zerados",
+      "Geração intencional de arquivos corrompidos deve ser suportada"
+    ],
+    "constraints": [
+      "Nenhum DV calculado automaticamente",
+      "Nenhuma dependência externa (apenas TypeScript/Vue)"
+    ]
+  },
+  "technical_objectives": [
+    {
+      "objective": "Corrigir 100% dos parâmetros e validações da estratégia cnab240.ts, eliminando todas as inconsistências bloqueantes, relevantes e cosméticas",
+      "measure_or_invariant": "O motor deve gerar e ler arquivos garantindo a tipagem, padding correto e posições exatas exigidas pela FEBRABAN"
+    }
+  ],
+  "scope": {
+    "included": [
+      "Correção completa de todos os campos mapeados nos Segmentos P, Q, T, U, Headers e Trailers",
+      "Ajuste no módulo generator.ts para preencher lacunas de campos numéricos ausentes com zeros à esquerda",
+      "Atualização de todas as camadas dependentes (composables, componentes de UI e testes) para refletir as novas assinaturas"
+    ],
+    "excluded": [
+      "Implementação de carteiras adicionais como Vinculada, Caucionada e Descontada",
+      "Implementação de funcionalidades de Banco Correspondente e Nome do Sacador/Avalista",
+      "Cálculo e validação automática de Dígitos Verificadores (DV)"
+    ]
+  },
+  "detailed_flows": {
+    "main_flow": [
+      "Remessa (Geração): O sistema recebe o payload estruturado; a estratégia mapeia os dados para as posições exatas",
+      "O generator.ts aplica o padding correto (zeros à esquerda para numéricos, espaços à direita para alfanuméricos) e preenche lacunas",
+      "Retorno (Leitura): O sistema recebe a string do arquivo, quebra em linhas, identifica o tipo de registro, extrai as substrings por índice",
+      "Valida as totalizações do Trailer (registro 5)"
+    ],
+    "alternative_flows": [
+      "Geração com Erros Intencionais: O usuário pode desabilitar validações para gerar arquivos corrompidos",
+      "Interrupção de Leitura: Falhas estruturais críticas no parse lançam erro e interrompem a leitura"
+    ]
+  },
+  "public_contracts": [
+    {
+      "name": "Cnab240 Interfaces",
+      "kind": "sdk",
+      "signature_or_route": "Cnab240Payload, Cnab240ParsedResult",
+      "method": "Local",
+      "request_example": {
+        "operation": "generate",
+        "ignoreValidation": true,
+        "payload": {
+          "header": {
+            "bankCode": "341"
+          }
+        }
+      },
+      "response_example": {
+        "status": "success",
+        "fileString": "0341...",
+        "warnings": [
+          {
+            "field": "payerName",
+            "error": "length_exceeded"
+          }
+        ]
+      },
+      "headers_semantics": [],
+      "status_semantics": [
+        "payload_size_limit - Arquivos devem respeitar a quebra estrita de 240 caracteres por linha",
+        "types - Atualização em cascata nos campos de Ocorrência do Pagador (Segmento U) e Motivo da Ocorrência (Segmento T)"
+      ]
+    }
+  ],
+  "errors_exceptions_fallback": {
+    "error_matrix": [
+      {
+        "condition": "Dados inválidos na geração",
+        "treatment": "Delegado ao usuário, não emite exceção se bypass ativo"
+      },
+      {
+        "condition": "Falha estrutural no arquivo lido",
+        "treatment": "Emissão de erro estruturado e interrupção"
+      },
+      {
+        "condition": "Campo não encontrado no parse",
+        "treatment": "Retorno de valor undefined ou nulo"
+      }
+    ],
+    "resilience_strategies": [
+      "Síncrono e local (timeouts, retries não aplicáveis)"
+    ],
+    "fallback_policy": "Fallback para undefined em chaves ausentes",
+    "invariants": [
+      "Comprimento estrito de 240 caracteres",
+      "Padding estrito baseado no tipo do campo"
+    ]
+  },
+  "observability": {
+    "dashboards_alerts": [
+      "Motor alimenta o componente de UI com dados estruturados de validação e warnings"
+    ]
+  },
+  "dependencies_compatibility": {
+    "dependencies": [
+      {
+        "component": "Node/TypeScript",
+        "min_version": "Atual",
+        "notes": "Nenhuma dependência externa"
+      }
+    ],
+    "compatibility_guarantees": [
+      "Breaking Change Interna: Exige refatoração de composables e UI legada",
+      "Arquivos gerados serão diferentes byte-a-byte em comparação às versões anteriores devido à correção de padding"
+    ]
+  },
+  "acceptance_criteria": [
+    "Parse de retorno extrai com precisão 'Motivo da Ocorrência' (T) e bloco de 'Ocorrência do Pagador' (U)",
+    "Geração assegura 240 posições/linha, zeros à esquerda p/ numéricos e espaços p/ alfanuméricos",
+    "Componente visual exibe erros de validação e permite exportar mal formatados"
+  ],
+  "risks": [
+    {
+      "risk": "Regressão Estrutural",
+      "probability": "medium",
+      "impact": "Corromper leiautes compartilhados ao alterar o comportamento de padding",
+      "mitigation": [
+        "Garantir zonas de Uso Exclusivo como alfa (espaços)",
+        "Adicionar testes de regressão"
+      ],
+      "contingency_plan": "Reverter PR do generator.ts e isolar padding por herança"
+    },
+    {
+      "risk": "Quebra de Integração",
+      "probability": "high",
+      "impact": "Componentes de UI não compilarem ou apresentarem erros de runtime",
+      "mitigation": [
+        "Type-Driven Development atualizando primeiro as definições e corrigindo compilador"
+      ],
+      "contingency_plan": "Ajustar interfaces legadas como opcionais temporariamente"
+    }
+  ]
+}
