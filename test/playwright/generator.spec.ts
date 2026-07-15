@@ -125,6 +125,35 @@ test.describe('Gerador de arquivos', () => {
     await expect(page.locator('.viewer__highlight')).toHaveText('000000000150000');
   });
 
+  test('régua do visualizador tem 451 posições fixas em qualquer leiaute', async ({ page }) => {
+    await expect(page.getByTestId('viewer-ruler')).toHaveText(/^1\s+11\s+21/, { timeout: 15000 });
+    const ruler = await page.getByTestId('viewer-ruler').innerText();
+    expect(ruler).toHaveLength(451);
+
+    await page.getByTestId('layout-chip-CNAB240').click();
+    const rulerAfterSwitch = await page.getByTestId('viewer-ruler').innerText();
+    expect(rulerAfterSwitch).toHaveLength(451);
+    // O rodapé continua exibindo o lineLength real da estratégia, não 451.
+    await expect(page.getByTestId('viewer-meta')).toContainText('240 posições');
+  });
+
+  test('conteúdo das linhas não é clipado antes da coluna 451 (correção do truncamento)', async ({
+    page,
+  }) => {
+    const line = page.locator('.viewer__line').first();
+    const box = await line.boundingBox();
+    expect(box).not.toBeNull();
+    // A linha precisa ter pelo menos a largura de 451 caracteres monoespaçados
+    // + a coluna de numeração — se estivesse clipada em ~80 colunas, a largura
+    // renderizada seria uma fração pequena disso.
+    expect(box!.width).toBeGreaterThan(400);
+
+    const viewerScroll = page.locator('.viewer__scroll');
+    const scrollWidth = await viewerScroll.evaluate((el) => el.scrollWidth);
+    const clientWidth = await viewerScroll.evaluate((el) => el.clientWidth);
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+  });
+
   test('copiar leva o conteúdo à área de transferência (RF-15)', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 

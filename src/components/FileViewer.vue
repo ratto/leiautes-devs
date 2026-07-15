@@ -29,7 +29,7 @@ interface ViewerLine {
   segments: LineSegment[];
 }
 
-const ruler = computed(() => buildRuler(fileStore.strategy.lineLength));
+const ruler = computed(() => buildRuler());
 
 /** Posições focadas por linha (campo em foco no formulário → destaque). */
 const highlightByLine = computed(() => {
@@ -123,7 +123,7 @@ function onDownload(): void {
     <div class="viewer__scroll" tabindex="0" aria-label="Conteúdo do arquivo gerado">
       <div class="viewer__ruler lpd-mono" aria-hidden="true">
         <span class="viewer__line-number"> </span>
-        <span class="viewer__ruler-text">{{ ruler }}</span>
+        <span class="viewer__ruler-text" data-testid="viewer-ruler">{{ ruler }}</span>
       </div>
       <q-virtual-scroll
         v-slot="{ item }: { item: ViewerLine }"
@@ -233,10 +233,20 @@ function onDownload(): void {
 
 .viewer__lines {
   max-height: 420px;
+
+  // O Quasar aplica `contain: content` (inclui `paint`) no conteúdo virtualizado,
+  // o que recorta qualquer filho mais largo que o container mesmo com overflow
+  // visível no ancestral — é essa a causa raiz do truncamento entre as colunas
+  // 71-81. Removemos o `paint` para permitir que as linhas ultrapassem a largura
+  // do container e o scroll horizontal de `.viewer__scroll` funcione até 451.
+  :deep(.q-virtual-scroll__content) {
+    contain: layout style;
+  }
 }
 
 .viewer__line {
   display: flex;
+  min-width: calc(451ch + 44px);
   font-size: 12.5px;
   line-height: 24px;
   white-space: pre;
