@@ -18,16 +18,16 @@ test.describe('Gerador de arquivos', () => {
     await expect(page.getByTestId('viewer-filename')).toHaveText('rcb001_retorno.ret');
     await expect(page.getByTestId('kind-chip-remessa')).toBeDisabled();
 
-    // 2. Preenche o header (campos obrigatórios).
-    await page.getByTestId('field-agency').fill('1234');
-    await page.getByTestId('field-account').fill('12345678');
+    // 2. Preenche o header (campos obrigatórios do RCB001 do BB).
+    await page.getByTestId('field-agreementNumber').fill('123456');
     await page.getByTestId('field-companyName').fill('EMPRESA TESTE LTDA');
 
     // 3. Preenche o registro-detalhe (inclui os campos do bug RF-11).
     const detail = page.getByTestId('detail-body-0');
-    await detail.getByTestId('field-ourNumber').fill('123456789012');
-    await detail.getByTestId('field-occurrenceDate').fill('15062026');
-    await detail.getByTestId('field-titleAmount').fill('150000');
+    await detail.getByTestId('field-agency').fill('1234');
+    await detail.getByTestId('field-account').fill('123456789');
+    await detail.getByTestId('field-paymentDate').fill('20260615');
+    await detail.getByTestId('field-orderNumber').fill('987654321');
     await detail.getByTestId('field-receivedAmount').fill('150000');
     await detail.getByTestId('field-feeAmount').fill('1050');
 
@@ -86,18 +86,14 @@ test.describe('Gerador de arquivos', () => {
     await page.getByTestId('layout-chip-CNAB400').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_retorno.ret');
     // Campo comum preservado ao alternar leiautes (RF-03).
-    await expect(page.getByTestId('field-companyName')).toHaveValue(
-      'EMPRESA TESTE LTDA',
-    );
+    await expect(page.getByTestId('field-companyName')).toHaveValue('EMPRESA TESTE LTDA');
 
     // CNAB400 suporta remessa: alternar muda extensão e campos.
     await page.getByTestId('kind-chip-remessa').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_remessa.rem');
   });
 
-  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({
-    page,
-  }) => {
+  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({ page }) => {
     // Fecha e reabre com confiabilidade (bug do protótipo corrigido).
     await expect(page.getByTestId('detail-body-0')).toBeVisible();
     await page.getByTestId('detail-toggle-0').click();
@@ -108,9 +104,9 @@ test.describe('Gerador de arquivos', () => {
     // Duplica: o novo registro herda os valores.
     await page.getByTestId('detail-body-0').getByTestId('field-titleAmount').fill('150000');
     await page.getByTestId('detail-duplicate-0').click();
-    await expect(
-      page.getByTestId('detail-body-1').getByTestId('field-titleAmount'),
-    ).toHaveValue('150000');
+    await expect(page.getByTestId('detail-body-1').getByTestId('field-titleAmount')).toHaveValue(
+      '150000',
+    );
 
     // Remove: volta a um registro.
     await page.getByTestId('detail-remove-1').click();

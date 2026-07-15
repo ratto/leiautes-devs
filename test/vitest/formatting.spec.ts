@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  currentDateAAAAMMDD,
   currentDateDDMMAA,
   currentDateDDMMAAAA,
   currentTimeHHMMSS,
@@ -85,6 +86,10 @@ describe('datas e horas de geração', () => {
 
   it('gera data no formato DDMMAA (CNAB400)', () => {
     expect(currentDateDDMMAA(fixedDate)).toBe('150626');
+  });
+
+  it('gera data no formato AAAAMMDD (RCB001)', () => {
+    expect(currentDateAAAAMMDD(fixedDate)).toBe('20260615');
   });
 
   it('gera hora no formato HHMMSS', () => {
