@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "product_or_system": "Leiautes Para Devs (codinome Cisne)",
+    "feature_name": "FileViewer — Régua Fixa (451 posições) e Correção de Truncamento",
+    "fdd_owner": "ratto",
+    "version": "1.0",
+    "date": "2026-07-15"
+  },
+  "context": {
+    "technical_motivation": "O FileViewer trunca o conteúdo das linhas entre as colunas 71-81 porque o q-virtual-scroll cria seu próprio contexto de scroll que clipa o overflow horizontal. A régua é gerada com buildRuler(lineLength), variando por layout, mas deve ser fixa em 451 posições para dar gordura além do CNAB400 (400 posições), permitindo que testers gerem arquivos mal-formados com validação desligada e visualizem o conteúdo além da posição 400.",
+    "fit_with_hld": "FileViewer pertence à camada View (src/components/FileViewer.vue). buildRuler pertence à camada Model (src/core/leiautes/generator.ts). A correção toca as duas camadas mas não altera contratos entre stores ou estratégias de layout.",
+    "actors": [
+      "Desenvolvedor que inspeciona arquivos gerados para verificar conformidade",
+      "Tester que gera arquivos propositalmente mal-formados (validação off) para testar sistemas externos"
+    ],
+    "assumptions": [
+      "buildRuler não tem consumers fora do repositório (verificado: apenas 3 arquivos a atualizar)",
+      "JetBrains Mono é a fonte monospace ativa no FileViewer, definindo a unidade ch usada no min-width"
+    ],
+    "constraints": [
+      "O rodapé deve continuar exibindo o lineLength real da estratégia ativa, não 451",
+      "A lógica de geração de conteúdo das linhas não deve ser alterada",
+      "Nenhum novo layout ou LayoutStrategy é criado nesta entrega"
+    ]
+  },
+  "technical_objectives": [
+    {
+      "objective": "buildRuler() sem parâmetros retorna string determinística de exatamente 451 caracteres",
+      "measure_or_invariant": "buildRuler().length === 451 sempre, para qualquer estado da aplicação"
+    },
+    {
+      "objective": "Régua exibida no FileViewer sempre abrange 451 posições independente do layout ativo",
+      "measure_or_invariant": "Elemento viewer__ruler-text tem textContent com exatamente 451 chars em qualquer layout"
+    },
+    {
+      "objective": "Nenhuma linha de conteúdo é clipada antes da coluna 451",
+      "measure_or_invariant": "Elemento viewer__line tem min-width suficiente para exibir 451 caracteres monospace sem overflow oculto"
+    },
+    {
+      "objective": "Conteúdo além da coluna 451 é truncado visualmente sem erro ao usuário",
+      "measure_or_invariant": "Ausência de notificação de erro quando linha excede 451 chars; arquivo baixado permanece íntegro"
+    }
+  ],
+  "scope": {
+    "included": [
+      "src/core/leiautes/generator.ts: refatoração de buildRuler (remoção do parâmetro, constante interna RULER_LENGTH = 451)",
+      "src/components/FileViewer.vue: atualização do call site de buildRuler e correção do truncamento via CSS",
+      "test/vitest/generator.spec.ts: atualização dos testes unitários de buildRuler para o novo contrato",
+      "Testes E2E/componente (Playwright): cobertura do novo comportamento da régua e ausência de truncamento"
+    ],
+    "excluded": [
+      "Rodapé (N posições): continua exibindo o lineLength real da estratégia ativa, não 451",
+      "Lógica de geração de conteúdo das linhas: o truncamento é exclusivamente visual",
+      "Criação de novos layouts ou estratégias (LayoutStrategy)",
+      "Virtualização (q-virtual-scroll) pode ser substituída se a correção exigir, a critério da implementação"
+    ]
+  },
+  "detailed_flows": {
+    "main_flow": [
+      "Usuário seleciona um layout (ex: CNAB400) e preenche o formulário",
+      "Usuário aciona a geração do arquivo",
+      "FileViewer monta: buildRuler() é chamado sem parâmetros e retorna string de 451 chars",
+      "A régua é exibida com 451 posições",
+      "As linhas de conteúdo (400 chars para CNAB400) são renderizadas sem truncamento",
+      "O scroll horizontal do .viewer__scroll cobre todo o intervalo de 1 a 451",
+      "O rodapé exibe 'N linhas · 400 posições' (lineLength real da estratégia)"
+    ],
+    "alternative_flows": [
+      "Validação off + arquivo mal-formado: linhas com mais de 400 chars são exibidas até a coluna 451 e truncadas visualmente após esse limite, sem notificação ao usuário",
+      "Arquivo ainda não gerado: a régua renderiza normalmente (451 posições); a área de linhas exibe estado vazio; nenhum erro é emitido",
+      "Mudança de layout sem regerar o arquivo: a régua permanece em 451; o rodapé atualiza para o lineLength do novo layout imediatamente"
+    ],
+    "diagrams": [
+      "Usuário --> gera arquivo --> fileStore.generated.lines (N linhas, cada uma com lineLength chars) --> FileViewer (mount/update) --> buildRuler() --> string[451] --> viewer__ruler (fora do q-virtual-scroll) | lines computed --> ViewerLine[] --> q-virtual-scroll --> viewer__line (min-width: 451ch + 44px) | viewer__scroll (overflow-x: auto) cobre régua + linhas juntas"
+    ]
+  },
+  "public_contracts": [
+    {
+      "name": "buildRuler",
+      "kind": "function",
+      "signature_or_route": "export function buildRuler(): string",
+      "request_example": "buildRuler()",
+      "response_example": "\"1         11        21        31        41        51        61        71        81        91        101       ...451\"",
+      "headers_semantics": [
+        "Constante interna RULER_LENGTH = 451",
+        "Cada dígito ocupa sua posição 1-based na string retornada",
+        "O char no índice n-1 corresponde à posição n do arquivo"
+      ],
+      "limits": {
+        "payload_size": "451 caracteres exatos (string de tamanho fixo)"
+      },
+      "versioning": "Quebra de API: parâmetro lineLength removido. Apenas 3 arquivos no repo precisam ser atualizados."
+    },
+    {
+      "name": "viewer__line CSS min-width",
+      "kind": "sdk",
+      "signature_or_route": ".viewer__line { min-width: calc(451ch + 44px) }",
+      "headers_semantics": [
+        "451ch: largura mínima para 451 caracteres monospace (JetBrains Mono)",
+        "44px: largura fixa da coluna viewer__line-number (flex: 0 0 44px)",
+        "Garante que o container do q-virtual-scroll não clipa o conteúdo horizontalmente"
+      ]
+    }
+  ],
+  "errors_exceptions_fallback": {
+    "error_matrix": [
+      {
+        "condition": "Arquivo não gerado",
+        "treatment": "Régua renderiza normalmente; área de linhas exibe estado vazio; nenhum erro emitido",
+        "notes": "Estado normal de entrada vazia, já tratado pelo componente"
+      },
+      {
+        "condition": "Conteúdo de linha maior que 451 chars",
+        "treatment": "Truncamento visual no limite de 451; sem notificação ao usuário",
+        "notes": "Conteúdo no arquivo exportado (Copiar/Baixar) permanece íntegro"
+      },
+      {
+        "condition": "buildRuler retorna output inesperado",
+        "treatment": "Impossível; função pura e determinística",
+        "notes": "Sem tratamento necessário"
+      }
+    ],
+    "resilience_strategies": [],
+    "fallback_policy": "Não aplicável (feature client-side sem I/O externo)",
+    "invariants": [
+      "buildRuler().length === 451 sempre",
+      "O conteúdo do arquivo exportado (Copiar/Baixar) não é afetado por esta feature",
+      "O lineLength da estratégia ativa nunca é alterado por esta feature"
+    ]
+  },
+  "observability": {
+    "metrics": [],
+    "logs": {
+      "format": "Não aplicável",
+      "fields": []
+    },
+    "tracing": {
+      "spans": [],
+      "sampling": "Não aplicável"
+    },
+    "dashboards_alerts": [
+      "Cobertura de testes automatizados (Vitest + Playwright) é o mecanismo de observabilidade contínua",
+      "Inspeção visual via DevTools (DOM/CSS) valida o comportamento durante desenvolvimento"
+    ]
+  },
+  "dependencies_compatibility": {
+    "dependencies": [
+      {
+        "component": "Vue",
+        "min_version": "3.x",
+        "notes": "Composition API (<script setup>)"
+      },
+      {
+        "component": "Quasar",
+        "min_version": "2.x",
+        "notes": "q-virtual-scroll com suporte a min-width via CSS externo"
+      },
+      {
+        "component": "TypeScript",
+        "min_version": "5.x strict",
+        "notes": "RULER_LENGTH como const tipada"
+      },
+      {
+        "component": "JetBrains Mono",
+        "min_version": "Qualquer",
+        "notes": "Fonte monospace que define a unidade ch usada no min-width"
+      },
+      {
+        "component": "Vitest",
+        "min_version": "2.x",
+        "notes": "Testes unitários de buildRuler"
+      },
+      {
+        "component": "Playwright",
+        "min_version": "1.x",
+        "notes": "Testes E2E do FileViewer"
+      }
+    ],
+    "compatibility_guarantees": [
+      "A remoção do parâmetro de buildRuler é uma quebra de API; todos os call sites foram verificados (apenas FileViewer.vue e generator.spec.ts); não há consumers externos",
+      "O rodapé do viewer não é afetado; fileStore.strategy.lineLength permanece a fonte de verdade para o tamanho do layout",
+      "Nenhuma prop pública do componente FileViewer é alterada; não há impacto em quem o utiliza"
+    ]
+  },
+  "acceptance_criteria": [
+    "buildRuler() (sem parâmetros) retorna string de exatamente 451 caracteres",
+    "A régua exibida no FileViewer tem 451 posições para qualquer layout ativo (RCB001, CNAB240, CNAB400)",
+    "Linhas de conteúdo não são clipadas antes da coluna 451 em nenhum layout",
+    "Scroll horizontal cobre todo o intervalo de 1 a 451 sem quebra de layout ou overflow indesejado",
+    "O rodapé exibe o lineLength real da estratégia ativa, não 451",
+    "Testes unitários de buildRuler em generator.spec.ts passam com o novo contrato (sem parâmetro, output de 451 chars)",
+    "Testes E2E cobrem: régua com 451 posições e ausência de truncamento nas linhas de conteúdo",
+    "Cobertura geral de testes mantida em >= 85%"
+  ],
+  "risks": [
+    {
+      "risk": "Quebra silenciosa de consumers de buildRuler fora do repo",
+      "probability": "low",
+      "impact": "Build error em projetos externos que importem buildRuler com o parâmetro obrigatório",
+      "mitigation": [
+        "Busca global por buildRuler confirmada antes do merge: apenas 3 arquivos no repo (generator.ts, FileViewer.vue, generator.spec.ts)",
+        "O projeto não exporta um pacote npm; não há consumers externos conhecidos"
+      ],
+      "contingency_plan": "Se um consumer externo for descoberto, adicionar overload TypeScript buildRuler(lineLength?: number) com lineLength ignorado e deprecation warning em comentário"
+    },
+    {
+      "risk": "Imprecisão do min-width em ch units com fonte não carregada",
+      "probability": "medium",
+      "impact": "Na primeira renderização (antes do carregamento de JetBrains Mono), o ch pode ser calculado com a fonte fallback, gerando largura levemente menor que 451 posições reais",
+      "mitigation": [
+        "Usar ch units (relativo à fonte monospace ativa) em vez de pixels absolutos, garantindo ajuste automático após carregamento da fonte",
+        "Verificar que JetBrains Mono está declarada no CSS global com font-display: block para minimizar o período de fonte fallback"
+      ],
+      "contingency_plan": "Se o desalinhamento for perceptível em testes, substituir ch por valor em px calculado empiricamente com a fonte carregada (ex: 12.5px * 0.6 * 451 + 44px)"
+    }
+  ]
+}
