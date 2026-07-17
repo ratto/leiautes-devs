@@ -50,7 +50,7 @@ describe('setLayout (RF-02, RF-03)', () => {
     const store = useFileStore();
     store.updateHeaderValue('bankName', '');
     store.setLayout('RCB001');
-    expect(store.headerValues.bankName).toBe('BANCO TESTE');
+    expect(store.headerValues.bankName).toBe('BANCO DO BRASIL');
   });
 
   it('é no-op para o mesmo leiaute', () => {

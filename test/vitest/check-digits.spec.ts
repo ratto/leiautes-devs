@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { modulo10, modulo11 } from '@/core/leiautes/check-digits';
+import { modulo10, modulo11, modulo11Bb } from '@/core/leiautes/check-digits';
 
 describe('modulo10', () => {
   it('calcula o DV de casos conhecidos', () => {
@@ -22,6 +22,29 @@ describe('modulo10', () => {
 
   it('rejeita entrada não numérica', () => {
     expect(() => modulo10('12A')).toThrow(/apenas dígitos/);
+  });
+});
+
+describe('modulo11Bb (nota 03 do manual RCB001 do BB)', () => {
+  it('reproduz o exemplo do manual (261533 → 9)', () => {
+    // 3×2 + 3×3 + 5×4 + 1×5 + 6×6 + 2×7 = 90 → resto 2 → 11−2 = 9
+    expect(modulo11Bb('261533')).toBe('9');
+  });
+
+  it('não cicla os pesos (crescem 2,3,4… até o primeiro dígito)', () => {
+    // '123456789' com pesos 2..10 → soma 210 → resto 1 → DV 10 → 'X'
+    expect(modulo11Bb('123456789')).toBe('X');
+  });
+
+  it("usa 'X' para DV 10 e '0' para DV 11 (convenção BB)", () => {
+    // '6': 6×2 = 12 → resto 1 → DV 10 → 'X'
+    expect(modulo11Bb('6')).toBe('X');
+    // '0': soma 0 → resto 0 → DV 11 → '0'
+    expect(modulo11Bb('0')).toBe('0');
+  });
+
+  it('rejeita entrada não numérica', () => {
+    expect(() => modulo11Bb('12A')).toThrow(/apenas dígitos/);
   });
 });
 

@@ -18,16 +18,16 @@ test.describe('Gerador de arquivos', () => {
     await expect(page.getByTestId('viewer-filename')).toHaveText('rcb001_retorno.ret');
     await expect(page.getByTestId('kind-chip-remessa')).toBeDisabled();
 
-    // 2. Preenche o header (campos obrigatórios).
-    await page.getByTestId('field-agency').fill('1234');
-    await page.getByTestId('field-account').fill('12345678');
+    // 2. Preenche o header (campos obrigatórios do RCB001 do BB).
+    await page.getByTestId('field-agreementNumber').fill('123456');
     await page.getByTestId('field-companyName').fill('EMPRESA TESTE LTDA');
 
     // 3. Preenche o registro-detalhe (inclui os campos do bug RF-11).
     const detail = page.getByTestId('detail-body-0');
-    await detail.getByTestId('field-ourNumber').fill('123456789012');
-    await detail.getByTestId('field-occurrenceDate').fill('15062026');
-    await detail.getByTestId('field-titleAmount').fill('150000');
+    await detail.getByTestId('field-agency').fill('1234');
+    await detail.getByTestId('field-account').fill('123456789');
+    await detail.getByTestId('field-paymentDate').fill('20260615');
+    await detail.getByTestId('field-orderNumber').fill('987654321');
     await detail.getByTestId('field-receivedAmount').fill('150000');
     await detail.getByTestId('field-feeAmount').fill('1050');
 

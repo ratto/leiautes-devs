@@ -54,3 +54,24 @@ export function modulo11(value: string): number {
   const dv = 11 - remainder;
   return dv >= 10 ? 0 : dv;
 }
+
+/**
+ * Módulo 11 na variação do Banco do Brasil (nota 03 do manual RCB001):
+ * pesos CRESCENTES 2, 3, 4… da direita para a esquerda, sem ciclo, e
+ * DV = 11 − (soma % 11). Convenção BB para os resultados de dois dígitos:
+ * 10 → 'X' e 11 → '0' (por isso o retorno é string, não número).
+ * Usado nos DVs da agência e da conta creditada do registro G do RCB001.
+ */
+export function modulo11Bb(value: string): string {
+  assertDigits(value, 'modulo11Bb');
+  let sum = 0;
+  let weight = 2;
+  for (let i = value.length - 1; i >= 0; i--) {
+    sum += Number(value[i]) * weight;
+    weight += 1;
+  }
+  const dv = 11 - (sum % 11);
+  if (dv === 11) return '0';
+  if (dv === 10) return 'X';
+  return String(dv);
+}
