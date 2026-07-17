@@ -86,18 +86,14 @@ test.describe('Gerador de arquivos', () => {
     await page.getByTestId('layout-chip-CNAB400').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_retorno.ret');
     // Campo comum preservado ao alternar leiautes (RF-03).
-    await expect(page.getByTestId('field-companyName')).toHaveValue(
-      'EMPRESA TESTE LTDA',
-    );
+    await expect(page.getByTestId('field-companyName')).toHaveValue('EMPRESA TESTE LTDA');
 
     // CNAB400 suporta remessa: alternar muda extensão e campos.
     await page.getByTestId('kind-chip-remessa').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_remessa.rem');
   });
 
-  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({
-    page,
-  }) => {
+  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({ page }) => {
     // Fecha e reabre com confiabilidade (bug do protótipo corrigido).
     await expect(page.getByTestId('detail-body-0')).toBeVisible();
     await page.getByTestId('detail-toggle-0').click();
@@ -108,9 +104,9 @@ test.describe('Gerador de arquivos', () => {
     // Duplica: o novo registro herda os valores.
     await page.getByTestId('detail-body-0').getByTestId('field-titleAmount').fill('150000');
     await page.getByTestId('detail-duplicate-0').click();
-    await expect(
-      page.getByTestId('detail-body-1').getByTestId('field-titleAmount'),
-    ).toHaveValue('150000');
+    await expect(page.getByTestId('detail-body-1').getByTestId('field-titleAmount')).toHaveValue(
+      '150000',
+    );
 
     // Remove: volta a um registro.
     await page.getByTestId('detail-remove-1').click();
@@ -152,6 +148,20 @@ test.describe('Gerador de arquivos', () => {
     const scrollWidth = await viewerScroll.evaluate((el) => el.scrollWidth);
     const clientWidth = await viewerScroll.evaluate((el) => el.clientWidth);
     expect(scrollWidth).toBeGreaterThan(clientWidth);
+  });
+
+  test('botões do visualizador mantêm o design do dark mode no tema claro (issue #6)', async ({
+    page,
+  }) => {
+    // Alterna para o light mode — o terminal continua escuro, então os
+    // botões precisam continuar com o texto creme do tema escuro.
+    await page.getByTestId('theme-toggle').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+    const copyColor = await page
+      .getByTestId('copy-button')
+      .evaluate((el) => getComputedStyle(el).color);
+    expect(copyColor).toBe('rgb(245, 233, 214)'); // --lpd-term-text (Crema)
   });
 
   test('copiar leva o conteúdo à área de transferência (RF-15)', async ({ page, context }) => {
