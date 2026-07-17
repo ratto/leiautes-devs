@@ -121,6 +121,54 @@ test.describe('Gerador de arquivos', () => {
     await expect(page.locator('.viewer__highlight')).toHaveText('000000000150000');
   });
 
+  test('régua do visualizador tem 451 posições fixas em qualquer leiaute', async ({ page }) => {
+    await expect(page.getByTestId('viewer-ruler')).toHaveText(/^1\s+11\s+21/, { timeout: 15000 });
+    const ruler = await page.getByTestId('viewer-ruler').innerText();
+    expect(ruler).toHaveLength(451);
+
+    await page.getByTestId('layout-chip-CNAB240').click();
+    const rulerAfterSwitch = await page.getByTestId('viewer-ruler').innerText();
+    expect(rulerAfterSwitch).toHaveLength(451);
+    // O rodapé continua exibindo o lineLength real da estratégia, não 451.
+    await expect(page.getByTestId('viewer-meta')).toContainText('240 posições');
+  });
+
+  test('conteúdo das linhas não é clipado antes da coluna 451 (correção do truncamento)', async ({
+    page,
+  }) => {
+    // O q-virtual-scroll não pode ser um scroller horizontal próprio — o scroll
+    // é delegado ao .viewer__scroll (scroll-target), que rola régua + linhas
+    // juntas. Se a classe `scroll` do Quasar voltar ao elemento raiz da
+    // virtualização, as linhas ficam presas a um contêiner interno da largura
+    // do viewer e somem após ~80 colunas (issue #5).
+    await expect(page.getByTestId('viewer-lines')).not.toHaveClass(/(?:^| )scroll(?: |$)/);
+
+    const viewerScroll = page.locator('.viewer__scroll');
+    await viewerScroll.scrollIntoViewIfNeeded();
+    const scrollWidth = await viewerScroll.evaluate((el) => el.scrollWidth);
+    const clientWidth = await viewerScroll.evaluate((el) => el.clientWidth);
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+
+    // Verificação de pintura (não só de geometria): rola até a região das
+    // colunas ~130-210 e confirma via hit-test que o texto da linha continua
+    // visível — antes da correção nada era pintado após a coluna ~80.
+    const hit = await viewerScroll.evaluate((scroller) => {
+      scroller.scrollLeft = 1000;
+      const rect = scroller.getBoundingClientRect();
+      const el = document.elementFromPoint(rect.left + rect.width / 2, rect.top + 60);
+      return el?.className ?? '';
+    });
+    expect(hit).toContain('viewer__line');
+
+    // Régua e linhas permanecem alinhadas após o scroll horizontal.
+    const misalignment = await page.evaluate(() => {
+      const ruler = document.querySelector('.viewer__ruler-text')!.getBoundingClientRect();
+      const line = document.querySelector('.viewer__line-text')!.getBoundingClientRect();
+      return Math.abs(ruler.left - line.left);
+    });
+    expect(misalignment).toBeLessThan(1);
+  });
+
   test('botões do visualizador mantêm o design do dark mode no tema claro (issue #6)', async ({
     page,
   }) => {

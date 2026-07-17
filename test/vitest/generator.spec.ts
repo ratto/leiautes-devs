@@ -188,15 +188,24 @@ describe('generateFile', () => {
 });
 
 describe('buildRuler', () => {
-  it('marca as posições 1, 11, 21… até a largura', () => {
-    const ruler = buildRuler(20);
-    expect(ruler).toHaveLength(20);
-    expect(ruler.startsWith('1')).toBe(true);
-    expect(ruler.slice(10, 12)).toBe('11');
+  it('retorna string determinística de exatamente 451 caracteres', () => {
+    expect(buildRuler()).toHaveLength(451);
   });
 
-  it('recorta a última marca que estoura a largura', () => {
-    expect(buildRuler(12)).toHaveLength(12);
+  it('marca as posições 1, 11, 21… até 451, independente do leiaute ativo', () => {
+    const ruler = buildRuler();
+    expect(ruler.startsWith('1')).toBe(true);
+    expect(ruler.slice(10, 12)).toBe('11');
+    expect(ruler.slice(20, 22)).toBe('21');
+    expect(ruler.slice(440, 443)).toBe('441');
+    // A marca "451" começa exatamente no último caractere (posição 451 = índice
+    // 450); só o primeiro dígito cabe — mesma regra de corte visual usada nas
+    // demais marcas quando o rótulo estoura a largura da régua.
+    expect(ruler[450]).toBe('4');
+  });
+
+  it('é determinística entre chamadas', () => {
+    expect(buildRuler()).toBe(buildRuler());
   });
 });
 
