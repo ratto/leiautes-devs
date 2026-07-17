@@ -179,6 +179,21 @@ function onDownload(): void {
 <style scoped lang="scss">
 // O terminal é sempre escuro, mesmo no tema claro (como um code block).
 .viewer {
+  // Dentro do terminal o design é sempre o do dark mode (issue #6):
+  // os componentes de marca (botões, badge) herdam estes tokens, então
+  // "Copiar", "Baixar arquivo" e o badge de validação mantêm o contraste
+  // do tema escuro mesmo quando a página está no light mode.
+  --lpd-text: var(--lpd-term-text);
+  --lpd-text-muted: var(--lpd-term-muted);
+  --lpd-border: var(--lpd-term-border);
+  --lpd-surface-2: #2a211a; // Torra Média (hover do botão ghost)
+  --lpd-accent: #f2a03d; // Âmbar
+  --lpd-accent-hover: #ffb454;
+  --lpd-on-accent: #1a1109; // Grão
+  --lpd-success: #5fbf8f;
+  --lpd-error: #f26d6d;
+  --lpd-warning: #f2c94c;
+
   background: var(--lpd-term-bg);
   border: 1px solid var(--lpd-term-border);
   border-radius: var(--lpd-radius-lg);
