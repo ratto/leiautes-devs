@@ -8,11 +8,18 @@
  * da ocorrência).
  *
  * PREMISSAS DO LEIAUTE (risco R1 do PRD — documentar por leiaute):
- * - Base: manual FEBRABAN de cobrança, versão de layout '103' (arquivo) e
- *   '060' (lote). Bancos específicos podem divergir em campos de uso
- *   exclusivo — variações devem virar extensão desta estratégia.
+ * - Base: manual FEBRABAN "Layout Padrão 240 Posições" v10.9 (14/10/2021),
+ *   versão de layout '103' (arquivo) e '060' (lote). Bancos específicos podem
+ *   divergir em campos de uso exclusivo — variações devem virar extensão
+ *   desta estratégia.
  * - Arquivo com UM lote de serviço (suficiente para massa de teste; múltiplos
  *   lotes ficam para release futura).
+ * - Somente Cobrança SIMPLES: o Segmento P fixa Cadastramento '1' e os totais
+ *   de carteira Vinculada/Caucionada/Descontada do Trailer de Lote saem
+ *   zerados (as carteiras adicionais estão fora do escopo — FDD CNAB240).
+ * - Funcionalidades de Banco Correspondente e de Sacador/Avalista fora do
+ *   escopo (FDD CNAB240): os campos numéricos correspondentes saem zerados
+ *   e os alfanuméricos em branco, conforme o preenchimento default da spec.
  * - Campos de juros/descontos/IOF são emitidos zerados (não editáveis) para
  *   manter o formulário enxuto; o essencial de cobrança é parametrizável.
  * - Datas no formato DDMMAAAA; valores em centavos, sem separadores.
@@ -60,6 +67,9 @@ function buildFileHeader(kind: FileKind): RecordSpec {
         hint: 'Até 12 dígitos',
       }),
       editable('accountDigit', 'DV da Conta', 71, 71, 'alfa'),
+      editable('agencyAccountDigit', 'DV da Agência/Conta', 72, 72, 'alfa', {
+        hint: 'DV combinado (quando o banco usa)',
+      }),
       editable('companyName', 'Nome da Empresa', 73, 102, 'alfa', {
         required: true,
         hint: 'Até 30 caracteres',
@@ -74,7 +84,17 @@ function buildFileHeader(kind: FileKind): RecordSpec {
         hint: 'Incrementa a cada arquivo trocado com o banco',
       }),
       fixed('layoutVersion', 'Versão do Layout', 164, 166, 'num', '103'),
-      fixed('density', 'Densidade de Gravação', 167, 171, 'num', '01600'),
+      // A spec não fixa a densidade (acordada com o banco) — por isso editável.
+      editable('density', 'Densidade de Gravação', 167, 171, 'num', {
+        defaultValue: '01600',
+        hint: 'Acordada com o banco (ex.: 01600)',
+      }),
+      editable('reservedBank', 'Reservado ao Banco', 172, 191, 'alfa', {
+        hint: 'Uso reservado do banco',
+      }),
+      editable('reservedCompany', 'Reservado à Empresa', 192, 211, 'alfa', {
+        hint: 'Uso reservado da empresa',
+      }),
     ],
   };
 }
@@ -99,6 +119,7 @@ function buildBatchHeader(kind: FileKind): RecordSpec {
       inherited('agencyDigit', 'DV da Agência', 59, 59, 'alfa'),
       inherited('account', 'Conta Corrente', 60, 71, 'num'),
       inherited('accountDigit', 'DV da Conta', 72, 72, 'alfa'),
+      inherited('agencyAccountDigit', 'DV da Agência/Conta', 73, 73, 'alfa'),
       inherited('companyName', 'Nome da Empresa', 74, 103, 'alfa'),
       editable('message1', 'Mensagem 1', 104, 143, 'alfa', {
         hint: 'Mensagem livre para o bloqueto',
@@ -108,6 +129,14 @@ function buildBatchHeader(kind: FileKind): RecordSpec {
         defaultValue: '1',
       }),
       computed('recordDate', 'Data de Gravação', 192, 199, 'num', () => currentDateDDMMAAAA()),
+      // Data do Crédito (200–207): informada pelo banco no retorno; zeros na remessa.
+      ...(kind === 'retorno'
+        ? [
+            editable('batchCreditDate', 'Data do Crédito (Lote)', 200, 207, 'num', {
+              hint: 'DDMMAAAA',
+            }),
+          ]
+        : [fixed('batchCreditDate', 'Data do Crédito (Lote)', 200, 207, 'num', '0')]),
     ],
   };
 }
@@ -130,6 +159,7 @@ const segmentP: RecordSpec = {
     inherited('agencyDigit', 'DV da Agência', 23, 23, 'alfa'),
     inherited('account', 'Conta Corrente', 24, 35, 'num'),
     inherited('accountDigit', 'DV da Conta', 36, 36, 'alfa'),
+    inherited('agencyAccountDigit', 'DV da Agência/Conta', 37, 37, 'alfa'),
     editable('ourNumber', 'Nosso Número', 38, 57, 'alfa', {
       required: true,
       hint: 'Identificação do título no banco (com DV)',
@@ -137,6 +167,14 @@ const segmentP: RecordSpec = {
     editable('walletCode', 'Carteira', 58, 58, 'num', { defaultValue: '1' }),
     fixed('registrationType', 'Cadastramento', 59, 59, 'num', '1'),
     fixed('docType', 'Tipo de Documento', 60, 60, 'alfa', '1'),
+    editable('boletoEmission', 'Identificação da Emissão do Boleto', 61, 61, 'num', {
+      defaultValue: '2',
+      hint: '1 = banco emite · 2 = cliente emite',
+    }),
+    editable('boletoDistribution', 'Identificação da Distribuição', 62, 62, 'alfa', {
+      defaultValue: '2',
+      hint: '1 = banco distribui · 2 = cliente distribui',
+    }),
     editable('documentNumber', 'Número do Documento', 63, 77, 'alfa', {
       hint: 'Nº da duplicata/nota',
     }),
@@ -148,11 +186,19 @@ const segmentP: RecordSpec = {
       required: true,
       hint: 'Em centavos (ex.: 150000 = R$ 1.500,00)',
     }),
+    editable('collectingAgency', 'Agência Cobradora', 101, 105, 'num', {
+      defaultValue: '0',
+      hint: 'Zeros = o banco atribui',
+    }),
+    editable('collectingAgencyDigit', 'DV da Agência Cobradora', 106, 106, 'alfa'),
     editable('titleKind', 'Espécie do Título', 107, 108, 'num', {
       defaultValue: '02',
       hint: '02 = duplicata mercantil',
     }),
-    fixed('acceptance', 'Aceite', 109, 109, 'alfa', 'N'),
+    editable('acceptance', 'Aceite', 109, 109, 'alfa', {
+      defaultValue: 'N',
+      hint: 'A = aceite · N = não aceite',
+    }),
     editable('issueDate', 'Data de Emissão', 110, 117, 'num', { hint: 'DDMMAAAA' }),
     // Juros, descontos, IOF e abatimento saem zerados (premissa documentada).
     fixed('interestCode', 'Código de Juros', 118, 118, 'num', '3'),
@@ -169,8 +215,11 @@ const segmentP: RecordSpec = {
     fixed('protestCode', 'Código de Protesto', 221, 221, 'num', '3'),
     fixed('protestDays', 'Prazo de Protesto', 222, 223, 'num', '0'),
     fixed('writeOffCode', 'Código de Baixa', 224, 224, 'num', '1'),
-    fixed('writeOffDays', 'Prazo de Baixa', 225, 227, 'num', '0'),
+    // A spec define este campo como Alfa (G077), não Num.
+    fixed('writeOffDays', 'Prazo de Baixa', 225, 227, 'alfa', '0'),
     fixed('currencyCode', 'Código da Moeda', 228, 229, 'num', '09'),
+    fixed('creditContractNumber', 'Nº do Contrato da Operação', 230, 239, 'num', '0'),
+    fixed('freeUse', 'Uso Livre Banco/Empresa', 240, 240, 'alfa', ''),
   ],
 };
 
@@ -200,11 +249,15 @@ const segmentQ: RecordSpec = {
     }),
     editable('payerAddress', 'Endereço do Pagador', 74, 113, 'alfa'),
     editable('payerNeighborhood', 'Bairro', 114, 128, 'alfa'),
-    editable('payerZip', 'CEP', 129, 136, 'num', { hint: '8 dígitos' }),
+    // A spec separa CEP (129–133) e Sufixo do CEP (134–136).
+    editable('payerZip', 'CEP', 129, 133, 'num', { hint: '5 dígitos' }),
+    editable('payerZipSuffix', 'Sufixo do CEP', 134, 136, 'num', { hint: '3 dígitos' }),
     editable('payerCity', 'Cidade', 137, 151, 'alfa'),
     editable('payerState', 'UF', 152, 153, 'alfa', { hint: 'Ex.: SP' }),
     fixed('guarantorDocType', 'Tipo de Inscrição do Avalista', 154, 154, 'num', '0'),
     fixed('guarantorDocument', 'CPF/CNPJ do Avalista', 155, 169, 'num', '0'),
+    // Banco correspondente fora do escopo (FDD) — campo Num sai zerado.
+    fixed('correspondentBank', 'Banco Correspondente', 210, 212, 'num', '0'),
   ],
 };
 
@@ -223,9 +276,11 @@ const segmentT: RecordSpec = {
       hint: '06 = liquidação',
     }),
     inherited('agency', 'Agência', 18, 22, 'num'),
-    inherited('agencyDigit', 'DV da Agência', 23, 23, 'alfa'),
+    // No Segmento T (e só nele) a spec define os DVs como Num, não Alfa.
+    inherited('agencyDigit', 'DV da Agência', 23, 23, 'num'),
     inherited('account', 'Conta Corrente', 24, 35, 'num'),
-    inherited('accountDigit', 'DV da Conta', 36, 36, 'alfa'),
+    inherited('accountDigit', 'DV da Conta', 36, 36, 'num'),
+    inherited('agencyAccountDigit', 'DV da Agência/Conta', 37, 37, 'num'),
     editable('ourNumber', 'Nosso Número', 38, 57, 'alfa', {
       required: true,
       hint: 'Identificação do título no banco (com DV)',
@@ -239,6 +294,9 @@ const segmentT: RecordSpec = {
     }),
     editable('collectingBank', 'Banco Cobrador', 97, 99, 'num', { defaultValue: '341' }),
     editable('collectingAgency', 'Agência Cobradora', 100, 104, 'num'),
+    editable('collectingAgencyDigit', 'DV da Agência Cobradora', 105, 105, 'num', {
+      defaultValue: '0',
+    }),
     editable('titleId', 'Identificação na Empresa', 106, 130, 'alfa', {
       hint: 'Uso livre da empresa ("seu número")',
     }),
@@ -249,9 +307,14 @@ const segmentT: RecordSpec = {
     }),
     editable('payerDocument', 'CPF/CNPJ do Pagador', 134, 148, 'num', { hint: 'Sem máscara' }),
     editable('payerName', 'Nome do Pagador', 149, 188, 'alfa'),
+    fixed('creditContractNumber', 'Nº do Contrato da Operação', 189, 198, 'num', '0'),
     // Correção do bug herdado do protótipo (RF-11): Valor da Tarifa explícito.
     editable('feeAmount', 'Valor da Tarifa', 199, 213, 'num', {
       hint: 'Em centavos · tarifas/custas da ocorrência',
+    }),
+    // Motivo da rejeição/tarifa/liquidação/baixa (C047) — essencial no retorno.
+    editable('occurrenceReason', 'Motivo da Ocorrência', 214, 223, 'alfa', {
+      hint: 'Até 5 códigos de 2 posições (ex.: A4)',
     }),
   ],
 };
@@ -298,39 +361,55 @@ const segmentU: RecordSpec = {
       hint: 'DDMMAAAA · data do pagamento',
     }),
     editable('creditDate', 'Data do Crédito', 146, 153, 'num', { hint: 'DDMMAAAA' }),
+    // Bloco "Ocorrência do Pagador" (154–210): diz POR QUE o título foi
+    // rejeitado/liquidado — a informação central do arquivo de retorno.
+    editable('payerOccurrenceCode', 'Código da Ocorrência do Pagador', 154, 157, 'alfa', {
+      hint: 'Código A001 (ex.: 0101)',
+    }),
+    editable('payerOccurrenceDate', 'Data da Ocorrência do Pagador', 158, 165, 'alfa', {
+      hint: 'DDMMAAAA',
+    }),
+    editable('payerOccurrenceValue', 'Valor da Ocorrência', 166, 180, 'num', {
+      defaultValue: '0',
+      hint: 'Em centavos',
+    }),
+    editable('payerOccurrenceDetail', 'Complemento da Ocorrência', 181, 210, 'alfa', {
+      hint: 'Texto livre de até 30 caracteres',
+    }),
+    // Banco correspondente fora do escopo (FDD) — campos Num saem zerados.
+    fixed('correspondentBank', 'Banco Correspondente', 211, 213, 'num', '0'),
+    fixed('correspondentOurNumber', 'Nosso Nº no Correspondente', 214, 233, 'num', '0'),
   ],
 };
 
 /** Trailer de Lote — registro tipo 5, com totalizadores automáticos. */
-function buildBatchTrailer(kind: FileKind): RecordSpec {
-  return {
-    id: 'batchTrailer',
-    label: 'Trailer de Lote',
-    fields: [
-      inherited('bankCode', 'Código do Banco', 1, 3, 'num'),
-      fixed('batchNumber', 'Lote de Serviço', 4, 7, 'num', '0001'),
-      fixed('recordType', 'Tipo de Registro', 8, 8, 'num', '5'),
-      // Header do lote + segmentos dos detalhes + este trailer (RF-07).
-      computed('batchRecordCount', 'Quantidade de Registros do Lote', 18, 23, 'num', (ctx) =>
-        String(ctx.detailCount * 2 + 2),
-      ),
-      computed('titleCount', 'Quantidade de Títulos', 24, 29, 'num', (ctx) =>
-        String(ctx.detailCount),
-      ),
-      computed('titleTotal', 'Valor Total dos Títulos', 30, 46, 'num', (ctx) =>
-        ctx.sumOfDetailField('titleAmount').toString(),
-      ),
-      // No retorno, totaliza também o valor efetivamente recebido.
-      ...(kind === 'retorno'
-        ? [
-            computed('receivedTotal', 'Valor Total Recebido', 47, 63, 'num', (ctx) =>
-              ctx.sumOfDetailField('receivedAmount').toString(),
-            ),
-          ]
-        : []),
-    ],
-  };
-}
+const batchTrailer: RecordSpec = {
+  id: 'batchTrailer',
+  label: 'Trailer de Lote',
+  fields: [
+    inherited('bankCode', 'Código do Banco', 1, 3, 'num'),
+    fixed('batchNumber', 'Lote de Serviço', 4, 7, 'num', '0001'),
+    fixed('recordType', 'Tipo de Registro', 8, 8, 'num', '5'),
+    // Header do lote + segmentos dos detalhes + este trailer (RF-07).
+    computed('batchRecordCount', 'Quantidade de Registros do Lote', 18, 23, 'num', (ctx) =>
+      String(ctx.detailCount * 2 + 2),
+    ),
+    // Só a carteira Simples é suportada — as demais saem zeradas (premissa).
+    computed('titleCount', 'Qtde de Títulos em Cobrança Simples', 24, 29, 'num', (ctx) =>
+      String(ctx.detailCount),
+    ),
+    computed('titleTotal', 'Valor Total — Cobrança Simples', 30, 46, 'num', (ctx) =>
+      ctx.sumOfDetailField('titleAmount').toString(),
+    ),
+    fixed('linkedTitleCount', 'Qtde — Cobrança Vinculada', 47, 52, 'num', '0'),
+    fixed('linkedTitleTotal', 'Valor Total — Cobrança Vinculada', 53, 69, 'num', '0'),
+    fixed('escrowTitleCount', 'Qtde — Cobrança Caucionada', 70, 75, 'num', '0'),
+    fixed('escrowTitleTotal', 'Valor Total — Cobrança Caucionada', 76, 92, 'num', '0'),
+    fixed('discountedTitleCount', 'Qtde — Cobrança Descontada', 93, 98, 'num', '0'),
+    fixed('discountedTitleTotal', 'Valor Total — Cobrança Descontada', 99, 115, 'num', '0'),
+    fixed('noticeNumber', 'Número do Aviso de Lançamento', 116, 123, 'alfa', ''),
+  ],
+};
 
 /** Trailer de Arquivo — registro tipo 9. */
 const fileTrailer: RecordSpec = {
@@ -344,6 +423,8 @@ const fileTrailer: RecordSpec = {
     computed('recordCount', 'Quantidade de Registros', 24, 29, 'num', (ctx) =>
       String(ctx.totalLines),
     ),
+    // Usado só no serviço "conciliação bancária" — zeros na cobrança.
+    fixed('reconciliationCount', 'Qtde de Contas p/ Conciliação', 30, 35, 'num', '0'),
   ],
 };
 
@@ -360,7 +441,7 @@ export const cnab240Strategy: LayoutStrategy = {
       fileHeader: buildFileHeader(kind),
       batchHeader: buildBatchHeader(kind),
       detailSegments: kind === 'remessa' ? [segmentP, segmentQ] : [segmentT, segmentU],
-      batchTrailer: buildBatchTrailer(kind),
+      batchTrailer,
       fileTrailer,
     };
     return structure;

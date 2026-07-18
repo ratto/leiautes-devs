@@ -155,8 +155,7 @@ function segmentClass(field: string): Record<string, boolean> {
 341000100012345?????????
 "era 9 ou 12 dígitos no valor?"
 "esse campo alinha à esquerda?"
-"faltou um zero... de novo."</pre
-          >
+"faltou um zero... de novo."</pre>
         </div>
         <div class="compare__pane compare__pane--after">
           <h3><span aria-hidden="true">✓</span> Agora — no Leiautes Para Devs</h3>
@@ -164,8 +163,7 @@ function segmentClass(field: string): Record<string, boolean> {
      1         11        21
 01 3410001000123450000150000
 campos validados pelas rules
-do Quasar · baixe em segundos</pre
-          >
+do Quasar · baixe em segundos</pre>
         </div>
       </div>
     </section>

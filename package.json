@@ -1,9 +1,9 @@
 {
   "name": "leiautes-devs",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "A Quasar Project",
   "productName": "Leiautes Para Devs",
-  "author": "ratto <rattopedro@gmail.com>",
+  "author": "Pedro 'Ratto' Paixão <rattopedro@gmail.com>",
   "type": "module",
   "private": true,
   "scripts": {

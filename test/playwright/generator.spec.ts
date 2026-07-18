@@ -18,16 +18,16 @@ test.describe('Gerador de arquivos', () => {
     await expect(page.getByTestId('viewer-filename')).toHaveText('rcb001_retorno.ret');
     await expect(page.getByTestId('kind-chip-remessa')).toBeDisabled();
 
-    // 2. Preenche o header (campos obrigatórios).
-    await page.getByTestId('field-agency').fill('1234');
-    await page.getByTestId('field-account').fill('12345678');
+    // 2. Preenche o header (campos obrigatórios do RCB001 do BB).
+    await page.getByTestId('field-agreementNumber').fill('123456');
     await page.getByTestId('field-companyName').fill('EMPRESA TESTE LTDA');
 
     // 3. Preenche o registro-detalhe (inclui os campos do bug RF-11).
     const detail = page.getByTestId('detail-body-0');
-    await detail.getByTestId('field-ourNumber').fill('123456789012');
-    await detail.getByTestId('field-occurrenceDate').fill('15062026');
-    await detail.getByTestId('field-titleAmount').fill('150000');
+    await detail.getByTestId('field-agency').fill('1234');
+    await detail.getByTestId('field-account').fill('123456789');
+    await detail.getByTestId('field-paymentDate').fill('20260615');
+    await detail.getByTestId('field-orderNumber').fill('987654321');
     await detail.getByTestId('field-receivedAmount').fill('150000');
     await detail.getByTestId('field-feeAmount').fill('1050');
 
@@ -86,18 +86,14 @@ test.describe('Gerador de arquivos', () => {
     await page.getByTestId('layout-chip-CNAB400').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_retorno.ret');
     // Campo comum preservado ao alternar leiautes (RF-03).
-    await expect(page.getByTestId('field-companyName')).toHaveValue(
-      'EMPRESA TESTE LTDA',
-    );
+    await expect(page.getByTestId('field-companyName')).toHaveValue('EMPRESA TESTE LTDA');
 
     // CNAB400 suporta remessa: alternar muda extensão e campos.
     await page.getByTestId('kind-chip-remessa').click();
     await expect(page.getByTestId('viewer-filename')).toHaveText('cnab400_remessa.rem');
   });
 
-  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({
-    page,
-  }) => {
+  test('card de registro-detalhe: abre/fecha, duplica e remove (RF-05/RF-06)', async ({ page }) => {
     // Fecha e reabre com confiabilidade (bug do protótipo corrigido).
     await expect(page.getByTestId('detail-body-0')).toBeVisible();
     await page.getByTestId('detail-toggle-0').click();
@@ -108,9 +104,9 @@ test.describe('Gerador de arquivos', () => {
     // Duplica: o novo registro herda os valores.
     await page.getByTestId('detail-body-0').getByTestId('field-titleAmount').fill('150000');
     await page.getByTestId('detail-duplicate-0').click();
-    await expect(
-      page.getByTestId('detail-body-1').getByTestId('field-titleAmount'),
-    ).toHaveValue('150000');
+    await expect(page.getByTestId('detail-body-1').getByTestId('field-titleAmount')).toHaveValue(
+      '150000',
+    );
 
     // Remove: volta a um registro.
     await page.getByTestId('detail-remove-1').click();
@@ -123,6 +119,68 @@ test.describe('Gerador de arquivos', () => {
     await detail.getByTestId('field-receivedAmount').focus();
     // O <mark> de destaque aparece com o valor formatado (15 dígitos no U).
     await expect(page.locator('.viewer__highlight')).toHaveText('000000000150000');
+  });
+
+  test('régua do visualizador tem 451 posições fixas em qualquer leiaute', async ({ page }) => {
+    await expect(page.getByTestId('viewer-ruler')).toHaveText(/^1\s+11\s+21/, { timeout: 15000 });
+    const ruler = await page.getByTestId('viewer-ruler').innerText();
+    expect(ruler).toHaveLength(451);
+
+    await page.getByTestId('layout-chip-CNAB240').click();
+    const rulerAfterSwitch = await page.getByTestId('viewer-ruler').innerText();
+    expect(rulerAfterSwitch).toHaveLength(451);
+    // O rodapé continua exibindo o lineLength real da estratégia, não 451.
+    await expect(page.getByTestId('viewer-meta')).toContainText('240 posições');
+  });
+
+  test('conteúdo das linhas não é clipado antes da coluna 451 (correção do truncamento)', async ({
+    page,
+  }) => {
+    // O q-virtual-scroll não pode ser um scroller horizontal próprio — o scroll
+    // é delegado ao .viewer__scroll (scroll-target), que rola régua + linhas
+    // juntas. Se a classe `scroll` do Quasar voltar ao elemento raiz da
+    // virtualização, as linhas ficam presas a um contêiner interno da largura
+    // do viewer e somem após ~80 colunas (issue #5).
+    await expect(page.getByTestId('viewer-lines')).not.toHaveClass(/(?:^| )scroll(?: |$)/);
+
+    const viewerScroll = page.locator('.viewer__scroll');
+    await viewerScroll.scrollIntoViewIfNeeded();
+    const scrollWidth = await viewerScroll.evaluate((el) => el.scrollWidth);
+    const clientWidth = await viewerScroll.evaluate((el) => el.clientWidth);
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+
+    // Verificação de pintura (não só de geometria): rola até a região das
+    // colunas ~130-210 e confirma via hit-test que o texto da linha continua
+    // visível — antes da correção nada era pintado após a coluna ~80.
+    const hit = await viewerScroll.evaluate((scroller) => {
+      scroller.scrollLeft = 1000;
+      const rect = scroller.getBoundingClientRect();
+      const el = document.elementFromPoint(rect.left + rect.width / 2, rect.top + 60);
+      return el?.className ?? '';
+    });
+    expect(hit).toContain('viewer__line');
+
+    // Régua e linhas permanecem alinhadas após o scroll horizontal.
+    const misalignment = await page.evaluate(() => {
+      const ruler = document.querySelector('.viewer__ruler-text')!.getBoundingClientRect();
+      const line = document.querySelector('.viewer__line-text')!.getBoundingClientRect();
+      return Math.abs(ruler.left - line.left);
+    });
+    expect(misalignment).toBeLessThan(1);
+  });
+
+  test('botões do visualizador mantêm o design do dark mode no tema claro (issue #6)', async ({
+    page,
+  }) => {
+    // Alterna para o light mode — o terminal continua escuro, então os
+    // botões precisam continuar com o texto creme do tema escuro.
+    await page.getByTestId('theme-toggle').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+    const copyColor = await page
+      .getByTestId('copy-button')
+      .evaluate((el) => getComputedStyle(el).color);
+    expect(copyColor).toBe('rgb(245, 233, 214)'); // --lpd-term-text (Crema)
   });
 
   test('copiar leva o conteúdo à área de transferência (RF-15)', async ({ page, context }) => {

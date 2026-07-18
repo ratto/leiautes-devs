@@ -68,6 +68,12 @@ export function currentDateDDMMAA(now: Date = new Date()): string {
   return currentDateDDMMAAAA(now).slice(0, 4) + String(now.getFullYear()).slice(-2);
 }
 
+/** Data corrente no formato AAAAMMDD (padrão do RCB001 do Banco do Brasil). */
+export function currentDateAAAAMMDD(now: Date = new Date()): string {
+  const date = currentDateDDMMAAAA(now);
+  return date.slice(4) + date.slice(2, 4) + date.slice(0, 2);
+}
+
 /** Hora corrente no formato HHMMSS (usada no header do CNAB240). */
 export function currentTimeHHMMSS(now: Date = new Date()): string {
   const hh = String(now.getHours()).padStart(2, '0');

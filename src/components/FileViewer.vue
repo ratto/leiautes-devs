@@ -5,7 +5,7 @@
 // - destaque do trecho correspondente ao campo focado no form (RF-14);
 // - virtualização para arquivos com milhares de linhas (RNF-12);
 // - barra de ações: Copiar e Baixar (RF-15).
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { buildRuler } from '@/core/leiautes';
 import { useFileExport } from '@/composables/useFileExport';
@@ -29,7 +29,14 @@ interface ViewerLine {
   segments: LineSegment[];
 }
 
-const ruler = computed(() => buildRuler(fileStore.strategy.lineLength));
+const ruler = computed(() => buildRuler());
+
+// Contêiner que rola o conjunto régua + linhas nos dois eixos. É passado como
+// scroll-target ao q-virtual-scroll para que ele NÃO crie um scroller próprio:
+// sem isso o Quasar aplica a classe `scroll` (overflow: auto) no elemento raiz
+// da virtualização, criando um contêiner interno da largura do viewer que
+// clipa as linhas após ~80 colunas enquanto a régua rola sozinha (issue #5).
+const scrollContainer = ref<HTMLElement | null>(null);
 
 /** Posições focadas por linha (campo em foco no formulário → destaque). */
 const highlightByLine = computed(() => {
@@ -120,16 +127,22 @@ function onDownload(): void {
     </div>
 
     <!-- Corpo: régua + linhas virtualizadas, roláveis juntas -->
-    <div class="viewer__scroll" tabindex="0" aria-label="Conteúdo do arquivo gerado">
+    <div
+      ref="scrollContainer"
+      class="viewer__scroll"
+      tabindex="0"
+      aria-label="Conteúdo do arquivo gerado"
+    >
       <div class="viewer__ruler lpd-mono" aria-hidden="true">
         <span class="viewer__line-number"> </span>
-        <span class="viewer__ruler-text">{{ ruler }}</span>
+        <span class="viewer__ruler-text" data-testid="viewer-ruler">{{ ruler }}</span>
       </div>
       <q-virtual-scroll
         v-slot="{ item }: { item: ViewerLine }"
         class="viewer__lines"
         :items="lines"
         :virtual-scroll-item-size="24"
+        :scroll-target="scrollContainer ?? undefined"
         data-testid="viewer-lines"
       >
         <div :key="item.number" class="viewer__line lpd-mono">
@@ -179,6 +192,21 @@ function onDownload(): void {
 <style scoped lang="scss">
 // O terminal é sempre escuro, mesmo no tema claro (como um code block).
 .viewer {
+  // Dentro do terminal o design é sempre o do dark mode (issue #6):
+  // os componentes de marca (botões, badge) herdam estes tokens, então
+  // "Copiar", "Baixar arquivo" e o badge de validação mantêm o contraste
+  // do tema escuro mesmo quando a página está no light mode.
+  --lpd-text: var(--lpd-term-text);
+  --lpd-text-muted: var(--lpd-term-muted);
+  --lpd-border: var(--lpd-term-border);
+  --lpd-surface-2: #2a211a; // Torra Média (hover do botão ghost)
+  --lpd-accent: #f2a03d; // Âmbar
+  --lpd-accent-hover: #ffb454;
+  --lpd-on-accent: #1a1109; // Grão
+  --lpd-success: #5fbf8f;
+  --lpd-error: #f26d6d;
+  --lpd-warning: #f2c94c;
+
   background: var(--lpd-term-bg);
   border: 1px solid var(--lpd-term-border);
   border-radius: var(--lpd-radius-lg);
@@ -214,8 +242,11 @@ function onDownload(): void {
 }
 
 .viewer__scroll {
-  overflow-x: auto;
-  padding: 12px 0;
+  // Único contêiner de scroll do corpo: rola régua + linhas juntas nos dois
+  // eixos (o q-virtual-scroll usa este elemento como scroll-target).
+  overflow: auto;
+  max-height: 456px;
+  padding-bottom: 12px;
 }
 
 .viewer__ruler {
@@ -225,6 +256,13 @@ function onDownload(): void {
   color: var(--lpd-term-muted);
   white-space: pre;
   user-select: none;
+
+  // A régua fica sempre visível durante o scroll vertical.
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--lpd-term-bg);
+  padding-top: 12px;
 }
 
 .viewer__ruler-text {
@@ -232,11 +270,19 @@ function onDownload(): void {
 }
 
 .viewer__lines {
-  max-height: 420px;
+  // O Quasar aplica `contain: content` (inclui `paint`) no conteúdo virtualizado,
+  // o que recorta qualquer filho mais largo que o container mesmo com overflow
+  // visível no ancestral. Removemos o `paint` para permitir que as linhas
+  // ultrapassem a largura do container e o scroll de `.viewer__scroll` funcione
+  // até a coluna 451.
+  :deep(.q-virtual-scroll__content) {
+    contain: layout style;
+  }
 }
 
 .viewer__line {
   display: flex;
+  min-width: calc(451ch + 44px);
   font-size: 12.5px;
   line-height: 24px;
   white-space: pre;

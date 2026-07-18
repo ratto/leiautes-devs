@@ -201,15 +201,18 @@ function collectErrors(
 }
 
 /**
- * Régua de posições do visualizador — marca as posições 1, 11, 21… na
- * largura do leiaute. Fica no Core para ser testável e reutilizável.
+ * Régua de posições do visualizador — marca as posições 1, 11, 21… até 451,
+ * fixa para qualquer leiaute (dá margem além do CNAB400, o maior em uso, para
+ * inspecionar arquivos mal-formados gerados com validação desligada).
  */
-export function buildRuler(lineLength: number): string {
+const RULER_LENGTH = 451;
+
+export function buildRuler(): string {
   let ruler = '';
-  for (let pos = 1; pos <= lineLength; pos += 10) {
+  for (let pos = 1; pos <= RULER_LENGTH; pos += 10) {
     ruler = ruler.padEnd(pos - 1, ' ') + String(pos);
   }
-  return ruler.padEnd(lineLength, ' ').slice(0, lineLength);
+  return ruler.padEnd(RULER_LENGTH, ' ').slice(0, RULER_LENGTH);
 }
 
 /** Sanidade estrutural: todos os campos cabem na largura e não se sobrepõem. */
