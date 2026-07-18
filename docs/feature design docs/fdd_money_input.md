@@ -2,7 +2,7 @@
 
 Versão: 1.0.0
 Data: 2026-07-17
-Responsável: ratto
+Responsável: Pedro "Ratto" Paixão
 
 ---
 
