@@ -10,6 +10,7 @@ import RecordFormSection from '@/components/RecordFormSection.vue';
 import ValidationSummary from '@/components/ValidationSummary.vue';
 import ValidationToggle from '@/components/ValidationToggle.vue';
 import { useFileStore } from '@/stores/file-store';
+import type { DetailEntryState } from '@/stores/file-store';
 
 const fileStore = useFileStore();
 </script>
@@ -75,12 +76,29 @@ const fileStore = useFileStore();
             provavelmente você quer adicionar pelo menos um. ☕
           </p>
 
-          <DetailCard
-            v-for="(detail, index) in fileStore.details"
-            :key="detail.id"
-            :detail="detail"
-            :index="index"
-          />
+          <!--
+            Lista virtualizada (issue #12 / RNF-12): reaproveita o q-virtual-scroll
+            já usado no FileViewer para renderizar só os cards visíveis. O DOM fica
+            limitado independentemente da quantidade de registros, evitando o
+            crescimento linear de nós/listeners que travava a aba com centenas de
+            registros. Ao contrário do FileViewer (que precisa de scroll horizontal
+            e delega o scroll-target), aqui só há scroll vertical, então o próprio
+            componente gerencia o contêiner de rolagem (altura limitada via CSS).
+            Os cards têm altura variável (recolhido ~48px, expandido bem maior); o
+            q-virtual-scroll mede cada item renderizado e ajusta o cálculo — o mesmo
+            padrão do "expansion model" documentado pelo Quasar.
+          -->
+          <q-virtual-scroll
+            v-else
+            v-slot="{ item, index }: { item: DetailEntryState; index: number }"
+            :items="fileStore.details"
+            :virtual-scroll-item-size="56"
+            :virtual-scroll-slice-size="6"
+            class="generator__details-list"
+            data-testid="details-scroll"
+          >
+            <DetailCard :key="item.id" :detail="item" :index="index" />
+          </q-virtual-scroll>
         </section>
 
         <ValidationSummary />
@@ -165,6 +183,20 @@ const fileStore = useFileStore();
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+// Contêiner de rolagem da lista virtualizada de registros-detalhe (issue #12).
+// A altura limitada é o que permite ao q-virtual-scroll renderizar só a fatia
+// visível; sem um teto de altura ele exibiria (e montaria) todos os cards.
+.generator__details-list {
+  max-height: 640px;
+
+  // O espaçamento entre cards não pode vir de `gap` do flex: dentro do
+  // virtual scroll os cards ficam em .q-virtual-scroll__content posicionado.
+  // Usamos margin por item para manter o respiro do design system.
+  :deep(.detail-card) {
+    margin-bottom: 12px;
+  }
 }
 
 .generator__details-head {

@@ -82,11 +82,13 @@ describe('setKind', () => {
 });
 
 describe('CRUD de registros-detalhe (RF-05, RF-06)', () => {
-  it('adiciona detalhe expandido com valores padrão', () => {
+  it('adiciona detalhe recolhido com valores padrão (issue #12)', () => {
     const store = useFileStore();
     store.addDetail();
     expect(store.details).toHaveLength(2);
-    expect(store.details[1]?.expanded).toBe(true);
+    // Nasce recolhido de propósito: o corpo do card só monta os inputs quando
+    // expandido, então criar recolhido evita inflar o DOM ao gerar em massa.
+    expect(store.details[1]?.expanded).toBe(false);
     expect(store.details[1]?.id).not.toBe(store.details[0]?.id);
   });
 
@@ -98,6 +100,22 @@ describe('CRUD de registros-detalhe (RF-05, RF-06)', () => {
     expect(store.details).toHaveLength(3);
     expect(store.details[1]?.values.titleAmount).toBe('150000');
     expect(store.details[1]?.id).not.toBe(store.details[0]?.id);
+  });
+
+  it('duplica detalhe recolhido, sem montar os inputs do clone (issue #12)', () => {
+    const store = useFileStore();
+    store.duplicateDetail(store.details[0]!.id);
+    expect(store.details).toHaveLength(2);
+    expect(store.details[1]?.expanded).toBe(false);
+  });
+
+  it('mantém o primeiro detalhe expandido no estado inicial (UX)', () => {
+    // Só os registros criados via add/duplicate nascem recolhidos; o detalhe
+    // inicial continua aberto para o usuário começar a preencher de imediato.
+    const store = useFileStore();
+    store.addDetail();
+    expect(store.details[0]?.expanded).toBe(true);
+    expect(store.details[1]?.expanded).toBe(false);
   });
 
   it('remove detalhe', () => {
