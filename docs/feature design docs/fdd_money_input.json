@@ -1,0 +1,226 @@
+{
+  "meta": {
+    "product_or_system": "Leiautes Para Devs (codinome Cisne, v2.0.0)",
+    "feature_name": "MoneyInput - Componente de Entrada de Valor Monetário em Centavos",
+    "fdd_owner": "ratto",
+    "version": "1.0.0",
+    "date": "2026-07-17"
+  },
+  "context": {
+    "technical_motivation": "Os campos monetários dos formulários de leiaute (RCB001, CNAB240, CNAB400) exibem hoje um número inteiro bruto em centavos. O usuário precisa ver e interagir com o valor no formato de moeda brasileira (R$ X.XXX,XX), mas o contrato interno - integer em centavos - não deve mudar.",
+    "fit_with_hld": "Componente da camada View (src/components/), sem lógica de negócio. Responsabilidade exclusiva de formatação e mascaramento de apresentação. Integra com stores Pinia e composables existentes via v-model.",
+    "actors": [
+      "Usuário final (dev ou QA que preenche o formulário de leiaute)",
+      "Componente pai (formulário de registro/detalhe)",
+      "Store Pinia (fonte de verdade do valor em centavos)"
+    ],
+    "assumptions": [
+      "QInput é o elemento raiz do template do componente",
+      "Vue 3 fallthrough attrs cobre o pass-through de atributos automaticamente"
+    ],
+    "constraints": [
+      "Não alterar o contrato de dados - entrada e saída sempre integer em centavos",
+      "UI 100% PT-BR",
+      "Sem persistência além da sessão do navegador"
+    ]
+  },
+  "technical_objectives": [
+    {
+      "objective": "Exibir valores monetários no formato BRL (R$ X.XXX,XX) sem alterar o contrato integer em centavos",
+      "measure_or_invariant": "update:modelValue sempre emite integer >= 0 ou null, nunca NaN ou negativo"
+    },
+    {
+      "objective": "Implementar entrada RTL estilo calculadora",
+      "measure_or_invariant": "Digitar 1, 2, 3, 0, 0 resulta em R$ 1.230,00 e emite 123000"
+    },
+    {
+      "objective": "Implementar paste robusto com parser de stripping",
+      "measure_or_invariant": "Qualquer string colada resulta em estado válido (nunca NaN, nunca negativo)"
+    }
+  ],
+  "scope": {
+    "included": [
+      "Componente <MoneyInput> em src/components/MoneyInput.vue",
+      "Formatação de exibição BRL com prefixo R$ sempre visível no campo",
+      "Entrada RTL estilo calculadora (novos dígitos acrescentam-se à direita dos centavos)",
+      "Backspace RTL (remove o dígito mais à direita; se não houver dígitos, emite null)",
+      "Paste com parser: suporta inteiro puro, decimal com vírgula ou ponto; faz stripping de caracteres inválidos",
+      "Teclas não-numéricas ignoradas silenciosamente, sem alterar o estado",
+      "Prop max-digits configurável - derivada do tamanho do campo no leiaute; keystroke que ultrapassaria o limite é ignorado",
+      "Prop rules no estilo Quasar, recebendo number | null em centavos",
+      "Pre-fill a partir de valor existente no model (ex.: 15050 exibe R$ 150,50)",
+      "Vue 3 fallthrough attrs para disabled, readonly, label, hint, dense, outlined, error, error-message e demais props do QInput",
+      "Cobertura de testes unitários com Vitest"
+    ],
+    "excluded": [
+      "Valores negativos (não fazem parte dos leiautes FEBRABAN suportados)",
+      "Placeholder customizável - o campo fica em branco quando vazio, exceto pelo prefixo R$",
+      "Formatação de outras moedas (somente BRL)",
+      "Persistência entre sessões",
+      "Máscara em campos não-monetários",
+      "Validação built-in de min/max - responsabilidade das rules do componente pai"
+    ]
+  },
+  "detailed_flows": {
+    "main_flow": [
+      "Usuário foca o campo - exibe R$ vazio ou o valor pré-carregado formatado",
+      "Usuário pressiona dígito numérico",
+      "Componente acrescenta o dígito à direita dos centavos internos (RTL)",
+      "Reaplica a formatação BRL ao valor interno acumulado",
+      "Emite o novo integer via update:modelValue",
+      "Usuário continua digitando - repete os passos 2 a 5",
+      "Valor exibido atualiza em tempo real; cursor é forçado ao final após cada atualização (nextTick + setSelectionRange)"
+    ],
+    "alternative_flows": [
+      "Backspace: remove o dígito mais à direita da representação interna. Se não houver mais dígitos, emite null e exibe campo em branco (com prefixo R$)",
+      "Paste - inteiro válido (ex.: 1234): faz stripping, interpreta como reais, multiplica por 100, exibe R$ 1.234,00, emite 123400",
+      "Paste - decimal válido com vírgula (ex.: 1234,56): faz stripping, extrai parte inteira e decimal, exibe R$ 1.234,56, emite 123456",
+      "Paste - decimal válido com ponto (ex.: 1234.56): mesmo comportamento do caso com vírgula",
+      "Paste - inválido com resultado não-vazio após stripping (ex.: -50 vira 50): trata como inteiro, exibe R$ 0,50, emite 50",
+      "Paste - inválido com resultado vazio após stripping (ex.: abc, ---): trata como campo vazio, exibe em branco, emite null",
+      "Tecla não-numérica: ignorada silenciosamente, estado não muda",
+      "Keystroke que excede max-digits: ignorado, campo não muda",
+      "Carregar com valor inicial (ex.: 15050): exibe R$ 150,50 imediatamente"
+    ]
+  },
+  "public_contracts": [
+    {
+      "name": "MoneyInput",
+      "kind": "Vue SFC (Single-File Component)",
+      "signature_or_route": "src/components/MoneyInput.vue",
+      "request_example": {
+        "modelValue": 15050,
+        "maxDigits": 13
+      },
+      "response_example": {
+        "event": "update:modelValue",
+        "payload": 15050
+      },
+      "headers_semantics": [
+        "modelValue: number | null - valor em centavos (integer >= 0) ou null para campo vazio",
+        "maxDigits: number (obrigatório) - número máximo de dígitos, derivado do tamanho do campo no leiaute",
+        "rules?: Array<(val: number | null) => true | string> - validações no estilo Quasar"
+      ],
+      "status_semantics": [
+        "update:modelValue emite number >= 0 quando há valor digitado",
+        "update:modelValue emite null quando o campo está vazio"
+      ],
+      "limits": {
+        "max_digits": "configurável via prop, derivado do tamanho do campo no leiaute"
+      },
+      "versioning": "v-model compatível com todos os formulários de leiaute existentes sem migração"
+    }
+  ],
+  "errors_exceptions_fallback": {
+    "error_matrix": [
+      {
+        "condition": "Paste que, após stripping, resulta em string vazia",
+        "treatment": "Emite null; campo exibe em branco com prefixo R$",
+        "notes": "Ex.: colar 'abc' ou '---'"
+      },
+      {
+        "condition": "Paste que resulta em '0' ou '00'",
+        "treatment": "Emite 0; exibe R$ 0,00",
+        "notes": "Zero é valor válido"
+      },
+      {
+        "condition": "Keystroke que excederia max-digits",
+        "treatment": "Ignorado silenciosamente; campo não muda",
+        "notes": ""
+      },
+      {
+        "condition": "Tecla não-numérica",
+        "treatment": "Ignorada silenciosamente; estado não muda",
+        "notes": ""
+      },
+      {
+        "condition": "modelValue recebe tipo inesperado (não number nem null)",
+        "treatment": "Tratado como null; em modo dev emite console.warn",
+        "notes": "Proteção defensiva para uso incorreto da API"
+      }
+    ],
+    "resilience_strategies": [
+      "n/a - componente client-side sem chamadas de rede"
+    ],
+    "fallback_policy": "Qualquer entrada inválida resulta em null (campo vazio) ou no valor stripado não-negativo. O componente nunca propaga NaN ou valor negativo.",
+    "invariants": [
+      "update:modelValue nunca emite NaN",
+      "update:modelValue nunca emite valor negativo",
+      "update:modelValue emite somente number >= 0 ou null"
+    ]
+  },
+  "observability": {
+    "logs": {
+      "format": "console.warn em modo de desenvolvimento (import.meta.env.DEV)",
+      "fields": [
+        "modelValue recebido",
+        "tipo inesperado detectado"
+      ]
+    }
+  },
+  "dependencies_compatibility": {
+    "dependencies": [
+      {
+        "component": "Quasar Framework",
+        "min_version": "2.x",
+        "notes": "QInput é o elemento raiz do template"
+      },
+      {
+        "component": "Vue 3",
+        "min_version": "3.3",
+        "notes": "Necessário para fallthrough attrs e defineModel/v-model pattern"
+      },
+      {
+        "component": "TypeScript",
+        "min_version": "strict mode ativo",
+        "notes": "Conforme quasar.config.ts"
+      },
+      {
+        "component": "Vitest",
+        "min_version": "versão atual do repositório",
+        "notes": "Testes unitários do componente"
+      }
+    ],
+    "compatibility_guarantees": [
+      "O contrato v-model (modelValue/update:modelValue) é compatível com todos os formulários de leiaute existentes sem alterações nos componentes pai",
+      "O fallthrough attrs garante compatibilidade retroativa com todos os props QInput já utilizados nos formulários (nenhum prop existente precisará ser migrado)",
+      "Nenhuma dependência externa nova será adicionada ao projeto"
+    ]
+  },
+  "acceptance_criteria": [
+    "Digitar dígitos sequencialmente exibe o valor formatado corretamente (R$ X.XXX,XX) e emite o integer em centavos correspondente",
+    "Backspace remove o último dígito e desloca os demais para a direita (comportamento RTL estilo calculadora)",
+    "Apagar todos os dígitos emite null e o campo exibe apenas o prefixo R$",
+    "Carregar o componente com valor inicial (ex.: 15050) exibe R$ 150,50 imediatamente, sem interação do usuário",
+    "Colar string inteira (ex.: 1234) resulta em R$ 1.234,00 e emite 123400",
+    "Colar string com decimal separado por vírgula (ex.: 1234,56) resulta em R$ 1.234,56 e emite 123456",
+    "Colar string com decimal separado por ponto (ex.: 1234.56) resulta em R$ 1.234,56 e emite 123456",
+    "Teclas não-numéricas são ignoradas sem alterar o valor ou a exibição",
+    "Keystroke que causaria ultrapassagem de max-digits é rejeitado e o campo não muda",
+    "A prop rules recebe o valor em centavos (integer ou null) e faz a mensagem de erro aparecer corretamente via QInput",
+    "Atributos QInput (disabled, readonly, label, hint, dense, outlined, etc.) são repassados corretamente via Vue 3 fallthrough attrs e refletem no elemento raiz"
+  ],
+  "risks": [
+    {
+      "risk": "Cursor/caret do QInput",
+      "probability": "medium",
+      "impact": "O QInput pode reposicionar o cursor automaticamente após cada atualização programática do modelValue, quebrando a ilusão de entrada RTL. O usuário veria o cursor no meio do valor formatado.",
+      "mitigation": [
+        "Usar nextTick + setSelectionRange após cada atualização para forçar o cursor ao final do campo",
+        "Testar em diferentes navegadores (Chrome, Firefox, Safari) para garantir comportamento uniforme"
+      ],
+      "contingency_plan": "Se setSelectionRange não funcionar corretamente com o QInput, usar um campo de texto readonly visível para exibição e um input oculto para capturar as teclas, delegando apenas a renderização ao QInput"
+    },
+    {
+      "risk": "Paste com formato inesperado",
+      "probability": "low",
+      "impact": "Strings como R$ 1.234,56, 1 000, -50 ou abc chegam no handler de paste; um parser mal implementado pode resultar em NaN ou estado inválido propagado ao store.",
+      "mitigation": [
+        "Implementar parser defensivo que strip todos os caracteres não-dígito exceto separador decimal (vírgula ou ponto); tratar o primeiro separador encontrado como decimal",
+        "Cobrir todos os casos com testes Vitest dedicados ao parser (incluindo edge cases: string vazia, somente sinais, múltiplos separadores, valor zero)",
+        "Se o resultado do strip for vazio, emitir null (nunca NaN ou negativo)"
+      ],
+      "contingency_plan": "Se um edge case passar pelo parser em produção, o fallback é emitir null (campo vazio) - nunca NaN ou negativo, preservando a invariante do contrato"
+    }
+  ]
+}
