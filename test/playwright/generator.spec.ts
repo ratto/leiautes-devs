@@ -105,9 +105,12 @@ test.describe('Gerador de arquivos', () => {
     await page.getByTestId('detail-toggle-0').click();
     await expect(page.getByTestId('detail-body-0')).toBeVisible();
 
-    // Duplica: o novo registro herda os valores.
+    // Duplica: o novo registro herda os valores. O clone nasce recolhido
+    // (virtualização/economia de DOM — issue #12), então expandimos antes de checar.
     await page.getByTestId('detail-body-0').getByTestId('field-titleAmount').fill('150000');
     await page.getByTestId('detail-duplicate-0').click();
+    await expect(page.getByTestId('detail-body-1')).toBeHidden();
+    await page.getByTestId('detail-toggle-1').click();
     await expect(
       page.getByTestId('detail-body-1').getByTestId('field-titleAmount'),
     ).toHaveValue('150000');
