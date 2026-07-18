@@ -212,16 +212,28 @@ export const useFileStore = defineStore('file', {
       if (detail) detail.values[key] = value;
     },
 
-    /** Adiciona um registro-detalhe novo, já expandido (RF-05). */
+    /**
+     * Adiciona um registro-detalhe novo, já recolhido (RF-05).
+     *
+     * Nasce recolhido de propósito (issue #12): o corpo do DetailCard só monta
+     * os ~15 q-input quando expandido. Criar recolhido evita montar dezenas de
+     * inputs de uma vez ao gerar muitos registros — o heap cai ~85% no cenário
+     * de centenas/milhares de detalhes. O usuário expande sob demanda.
+     */
     addDetail() {
       this.details.push({
         id: nextDetailId(),
         values: seedValues(this.structure.detailSegments),
-        expanded: true,
+        expanded: false,
       });
     },
 
-    /** Duplica um registro-detalhe com todos os valores (RF-05). */
+    /**
+     * Duplica um registro-detalhe com todos os valores (RF-05).
+     *
+     * Também nasce recolhido (issue #12) pela mesma razão do addDetail: evitar
+     * montar os inputs do clone imediatamente. Duplicar em massa não infla o DOM.
+     */
     duplicateDetail(detailId: string) {
       const source = this.details.find((item) => item.id === detailId);
       if (!source) return;
@@ -229,7 +241,7 @@ export const useFileStore = defineStore('file', {
       this.details.splice(index + 1, 0, {
         id: nextDetailId(),
         values: { ...source.values },
-        expanded: true,
+        expanded: false,
       });
     },
 
